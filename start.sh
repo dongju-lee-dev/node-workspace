@@ -1,1 +1,3 @@
-python3 scripts/core/core.py
+clear
+
+python3 $(pwd)'/scripts/core/core.py'
