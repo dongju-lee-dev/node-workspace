@@ -1,19 +1,16 @@
 from aiohttp import web
-import json
 import scripts.utility.file as file
 
 
-def main_page(request):
-    return web.FileResponse("assets/page/index.html")
+class Server:
+    def __init__(self, host: str, port: int):
+        self.app = web.Application()
+        self.app.add_routes(
+            [
+                web.get("/", self.main_page),
+            ]
+        )
+        web.run_app(self.app, host=host, port=port)
 
-
-app = web.Application()
-app.add_routes(
-    [
-        web.get("/", main_page),
-    ]
-)
-
-setting = json.loads(file.read_file("settings/server_setting.json"))
-
-web.run_app(app, host=setting["host"], port=setting["port"])
+    def main_page(request):
+        return web.FileResponse("assets/page/index.html")

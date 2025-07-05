@@ -1,13 +1,19 @@
 import sys
 import os
+import json
 
 sys.path.append(os.getcwd())
 
-# ===== start =====
+import scripts.etc.path as path
+import scripts.server.server as server
+import scripts.utility.file as file
 
-# assets 확인
-# package 확인
-# save 확인
-# settings 확인
 
-import scripts.server.server
+import torch
+import tensorflow
+
+# server start
+
+server_setting = json.loads(file.read_file(path.SERVER_SETTING_PATH))
+
+server.Server(server_setting["host"], server_setting["port"])
