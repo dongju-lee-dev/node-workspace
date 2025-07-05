@@ -1,1 +1,0 @@
-SERVER_SETTING_PATH = "setting/server_setting.json"
