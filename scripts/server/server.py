@@ -24,12 +24,16 @@ class Server:
             [
                 web.get("/", self.main_handle),
                 web.get("/assets/{tail:.*}", self.assets_handle),
+                web.get("/settings/{tail:.*}", self.settings_hnadle),
             ]
         )
         web.run_app(app, host=host, port=port)
 
-    def main_handle(self, request: web.Request):
+    async def main_handle(self, request: web.Request):
         return web.FileResponse("assets/page/index.html")
 
-    def assets_handle(self, request: web.Request):
+    async def assets_handle(self, request: web.Request):
         return web.FileResponse(request.path[1:])
+
+    async def settings_hnadle(self, request: web.Request):
+        return web.FileField(request.path[1:])
