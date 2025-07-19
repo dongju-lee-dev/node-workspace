@@ -66,8 +66,7 @@ export class WorkSpace {
         e.preventDefault();
 
         const zoomFactor = 1.1;
-        const direction = e.deltaY < 0 ? 'in' : 'out';
-        const newScale = direction === 'in' ? this.scale * zoomFactor : this.scale / zoomFactor;
+        const newScale = e.deltaY < 0 ? this.scale * zoomFactor : this.scale / zoomFactor;
 
         if (newScale < 0.1 || newScale > 4) return;
 
