@@ -46,6 +46,10 @@ body {
     transform-origin: left top;
 }
 
+.workspace-command {
+    background-color: rgb(200, 200, 200);
+}
+
 .node {
     background-color: rgb(64, 64, 64);
     border: 1px solid rgb(128, 128, 128);

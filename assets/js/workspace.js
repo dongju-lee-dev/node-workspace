@@ -4,25 +4,33 @@ export class WorkSpace {
 
     workspace;
     workspaceBackground;
+    workspaceCommand;
     positionX = 0;
     positionY = 0;
     scale = 1;
 
-    constructor(workspace, workspaceBackground) {
+    constructor(workspace, workspaceBackground, workspaceCommand) {
         this.workspace = workspace;
         this.workspaceBackground = workspaceBackground;
+        this.workspaceCommand = workspaceCommand;
 
         workspace.addEventListener('mousedown', this.MovementMouseDown);
         workspace.addEventListener('mousemove', this.MovementMouseMove);
         workspace.addEventListener('mouseup', this.MovementMouseUp);
         workspace.addEventListener('mouseleave', this.MovementMouseLeave);
         workspace.addEventListener('wheel', this.ZoomWheel);
+        workspace.addEventListener('mousedown', this.CommandMouseDown);
 
         workspaceBackground.addEventListener('mousedown', this.MovementMouseDown);
         workspaceBackground.addEventListener('mousemove', this.MovementMouseMove);
         workspaceBackground.addEventListener('mouseup', this.MovementMouseUp);
         workspaceBackground.addEventListener('mouseleave', this.MovementMouseLeave);
         workspaceBackground.addEventListener('wheel', this.ZoomWheel);
+        workspaceBackground.addEventListener('mousedown', this.CommandMouseDown);
+    }
+
+    open(){
+        
     }
 
     updateTransform() {
@@ -65,8 +73,8 @@ export class WorkSpace {
     ZoomWheel = (e) => {
         e.preventDefault();
 
-        const zoomFactor = 1.1;
-        const newScale = e.deltaY < 0 ? this.scale * zoomFactor : this.scale / zoomFactor;
+        const ratio = 1.1;
+        const newScale = e.deltaY < 0 ? this.scale * ratio : this.scale / ratio;
 
         if (newScale < 0.1 || newScale > 4) return;
 
@@ -86,6 +94,12 @@ export class WorkSpace {
             this.updateTransform();
             this.rafId = null;
         });
+    }
+
+    CommandMouseDown = (e) => {
+        if(e.button != 2) return;
+
+        
     }
 
     getWorkspace() {

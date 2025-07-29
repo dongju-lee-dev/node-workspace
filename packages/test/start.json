@@ -1,0 +1,11 @@
+{
+    "node": [
+        {
+            "group": "test_group",
+            "name": "test_node",
+            "code": "add.py",
+            "desgin": "add.html"
+        }
+    ],
+    "tool": []
+}
