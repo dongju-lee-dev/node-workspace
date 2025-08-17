@@ -1,6 +1,6 @@
 import os
 
-g_path = os.getcwd() + "/"
+g_path = os.getcwd() + os.sep
 
 
 def create_file(path: str):

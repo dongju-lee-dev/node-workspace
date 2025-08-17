@@ -9,35 +9,49 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# web : 정리
-# web.Application()으로 인스턴스 생성
-# web.run_app()로 실행
-# web.Response 기본적인 데이터 보내기 body, content_type 등을 직접 작성해야함
-# web.FileResponse file 데이터를 보낼떄
-# web.StreamResponse 단방향 대용량 데이터 전송에 좋음
-# web.json_response json 데이터 보내기
-# web.WebSocketResponse 웹소켓 연결 통신
+# 2
+# 패키지 방식으로 built_in_ui 시리즈 개발
+# bulit_in_ui_setting
+# built_in_ui_package
+# built_in_ui_workspace
+# built_in_ui_workspace_save
+# built_in_ui_icon
 
-# 서버 입장 : get과 post는 기본이고 나머지는 바리에이션인듯
-# web.get 데이터 보내기
-# web.post 데이터 받기
-# web.put 데이터 등록
-# web.patch 데이터 수정
-# web.delete 데이터 삭제
+# 3
+# 노드 생성
+# 노드 연결
 
-# load map
-# 7w
-# webui에서 node 검색, 생성, 연결, 삭제, 조작
-# webui에서 tool 검색, 사용
+# 4
+# workspace 연동
+# workspace 로드, 언로드, 세이브
+# workspace 코드 제작 기술 개발
+# 글로벌 변수 기능
+# 워크스페이스를 불러오면 글로벌 변수 기능이 있는데 
+# 코드를 실행하면 글로벌 변수에 접근하여 변경이 가능하며 코드 실행이 끝이 나도 글로벌 변수는 사라지지 않는다.
+
+# 5
+# 패키지에 로컬 폴더를 집어 넣는 기능 추가
+# 외부 저장 작업 공간 주소 기능 추가
 
 setting.read()
+
+if not setting.existe("host"):
+    setting.set("host", "localhost")
+
+if not setting.existe("port"):
+    setting.set("port", 8080)
 
 app = web.Application()
 
 app.add_routes(asset.init())
 app.add_routes(package.init())
 app.add_routes(workspace.init())
+app.add_routes(setting.init())
 
 web.run_app(app, host=setting.get("host"), port=setting.get("port"))
 
 setting.write()
+
+# side panel 반갈 기능
+# 다중 사용자 기능
+# 다중 편집 기능

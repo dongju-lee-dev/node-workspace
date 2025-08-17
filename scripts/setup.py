@@ -1,0 +1,1 @@
+# windows-setup.bat에서 실행하여 기본적으로 가지고 있는데 packages의 setup을 진행한다.

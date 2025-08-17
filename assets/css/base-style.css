@@ -1,65 +1,87 @@
-#root {
-    color-scheme: light dark;
+:root {
+    --background-color: rgb(32, 32, 32);
+    --background-color-hover: rgb(48, 48, 48);
+    --border-color: rgb(128, 128, 128);
+    --text-color: rgb(192, 192, 192);
+    --text-color-hover: rgb(255, 255, 255);
+    --point-color: rgb(0, 192, 0);
+    --point-small-color: rgb(0, 128, 0);
 }
 
-body {
-    overflow: hidden;
-    margin: 0px;
-    height: 100%;
-    width: 100%;
-}
-
-.top-bar {
+header {
     position: fixed;
-    width: 100%;
-    height: 5%;
     top: 0px;
-    background-color: rgb(32, 32, 32);
-    border-bottom: 1px solid rgb(128, 128, 128);
-    z-index: 2;
+    left: 0px;
+    right: 0px;
+    height: 50px;
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
-.bottom-bar {
-    position: fixed;
-    width: 100%;
-    height: 2.5%;
-    bottom: 0px;
-    background-color: rgb(32, 32, 32);
-    border-top: 1px solid rgb(128, 128, 128);
-    z-index: 2;
-}
-
-.workspace-background {
+main {
     position: fixed;
     top: 0px;
     right: 0px;
     bottom: 0px;
     left: 0px;
-    background-color: rgb(48, 48, 48);
     z-index: -10;
 }
 
-.workspace {
-    width: 100%;
-    height: 100%;
-    background-color: rgb(48, 48, 48);
-    transform-origin: left top;
+footer {
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    height: 25px;
+    background-color: var(--background-color);
+    border-top: 1px solid var(--border-color);
 }
 
-.workspace-command {
-    background-color: rgb(200, 200, 200);
+label {
+    color: var(--text-color);
 }
 
-.node {
-    background-color: rgb(64, 64, 64);
-    border: 1px solid rgb(128, 128, 128);
-    width: min-content;
-    height: min-content;
-    padding: 10px;
-    color: rgb(248, 248, 248);
-    z-index: -1;
+select {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
 }
 
-.line {
-    z-index: -2;
+option {
+    color: var(--text-color);
+}
+
+ul {
+    list-style-type: none;
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin: 0px;
+    padding: 5px;
+    width: 160px;
+}
+
+li {
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 2px 15px 2px 15px;
+    border-radius: 5px;
+}
+
+li:hover {
+    background-color: var(--point-color);
+    color: var(--text-color-hover);
+}
+
+.left-point {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.right-point {
+    position: absolute;
+    top: 0px;
+    right: 0px;
 }

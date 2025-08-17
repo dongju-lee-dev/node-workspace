@@ -11,7 +11,8 @@ from scripts.tool import ToolBase
 PACKAGE_PATH = "packages"
 
 node: dict[str, dict[str, NodeData]]  # node[node_group_name][node_name]
-tool: dict[str, ToolBase]  # tool[index]
+tool: dict[str, ToolBase]  # tool[tool_name]
+module: dict  # module[index]
 
 
 def init():
@@ -22,9 +23,11 @@ def init():
 
     global node
     global tool
+    global module
 
     node = {}
     tool = {}
+    module = {}
 
     for package_name in file.list_directory(PACKAGE_PATH):
         start = json.loads(file.read_file(f"{PACKAGE_PATH}/{package_name}/start.json"))
@@ -36,14 +39,15 @@ def init():
                 file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['code']}"),
                 file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['desgin']}"),
             )
-            
+
         for buff in start["tool"]:
             set_tool(package_name, buff["name"], buff["path"], buff["class_name"])
 
     return [
-        web.get("/packages", package_handle), 
+        web.get("/packages", package_handle),
         web.get("/packages/node", node_handle),
         web.get("/packages/tool", tool_handle),
+        web.get("/packages/asset/{tail:.*}", asset_handle),
     ]
 
 
@@ -52,6 +56,7 @@ def reset():
 
     global node
     global tool
+    global module
 
     node = {}
     tool = {}
@@ -66,9 +71,14 @@ def reset():
                 file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['code']}"),
                 file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['desgin']}"),
             )
-            
+
         for buff in start["Tool"]:
-            set_tool(package_name, buff["name"], buff["path"], buff["class_name"])
+            name_buff = buff["name"]
+            module_buff = module[name_buff]
+
+            importlib.reload(module_buff)
+
+            tool[name_buff] = getattr(module_buff, buff["class_name"])()
 
 
 def package_handle(request: web.Request):
@@ -105,7 +115,7 @@ def package_list():
     return web.Response(text=text)
 
 
-def package_add(url:str):
+def package_add(url: str):
     path = f"{PACKAGE_PATH}/__temp__"
 
     if file.existe_directory(path):
@@ -132,12 +142,12 @@ def package_add(url:str):
         reset()
 
         return web.Response(text="reset")
-    
+
     except Exception as e:
         return web.Response(text=str(e))
 
 
-def package_remove(name:str):
+def package_remove(name: str):
     file.delete_directory(f"{PACKAGE_PATH}/{name}")
 
     reset()
@@ -202,7 +212,7 @@ def get_node_group(node_group_name: str):
 
 def get_node(node_group_name: str, node_name: str):
     """Return NodeData"""
-    
+
     global node
 
     buff = node.get(node_group_name)
@@ -218,7 +228,7 @@ def set_node(node_group_name: str, node_name: str, node_code: str, node_desgin: 
     global node
 
     if node.get(node_group_name) == None:
-        node[node_group_name] = {node_name:NodeData(node_code, node_desgin)}
+        node[node_group_name] = {node_name: NodeData(node_code, node_desgin)}
     else:
         node[node_group_name][node_name] = NodeData(node_code, node_desgin)
 
@@ -226,12 +236,12 @@ def set_node(node_group_name: str, node_name: str, node_code: str, node_desgin: 
 async def tool_handle(request: web.Request):
     """
     list returns the names of all tools you currently have. use command=list
-    When loading tools from the web, use command=load.
-    When unloading tools from the web, use command=unload.
+    When loading tools from the web, use command=load. use name=(tool name).
+    When unloading tools from the web, use command=unload. use name=(tool name).
     """
 
     command = request.query.get("command")
-    
+
     if command == "list":
         return tool_list()
     elif command == "load":
@@ -249,29 +259,36 @@ def tool_list():
 
     text = ""
     number = len(tool)
-        
+
     for name in tool:
         number -= 1
         if number != 0:
             text += f"{name},"
         else:
             text += f"{name}"
-                
+
     return web.Response(text=text)
 
 
-def get_tool(tool_name:str):
+def get_tool(tool_name: str):
     """Return ToolBase"""
 
-
     global tool
-    
+
     return tool[tool_name]
 
 
-def set_tool(package_name:str, tool_name:str, tool_path:str, tool_class_name:str):
+def set_tool(package_name: str, tool_name: str, tool_path: str, tool_class_name: str):
     """The function to add a tool requires the name of the package tool class, the tool name, and the location of the tool file."""
 
+    global module
     global tool
-    
-    tool[tool_name] = getattr(importlib.import_module(tool_name, file.get_absolute_path(f"{PACKAGE_PATH}/{package_name}/{tool_path}")), tool_class_name)()
+
+    m_buff = importlib.import_module(f"{PACKAGE_PATH}.{package_name}.{tool_path}")
+
+    module[tool_name] = m_buff
+    tool[tool_name] = getattr(m_buff, tool_class_name)()
+
+
+def asset_handle(request: web.Request):
+    return web.FileResponse(f"packages/{request.path[6:]}")

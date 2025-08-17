@@ -1,0 +1,117 @@
+<div id="bar">
+    <h4 id="name"></h4>
+    <img id="left-arrow" src="/assets/image/left-arrow.png">
+    <img id="right-arrow" src="/assets/image/right-arrow.png">
+    <img id="exit" src="/assets/image/exit.png">
+</div>
+<div id="body">
+    <div id="content"></div>
+</div>
+<div id="resizable"></div>
+<div id="unfold"></div>
+<style>
+    :host {
+        --size: 300px;
+
+        background-color: var(--background-color);
+        top: 50px;
+        bottom: 25px;
+        width: var(--size);
+        position: fixed;
+    }
+
+    :host(.left) {
+        transform-origin: left top;
+        left: 0px;
+    }
+
+    :host(.right) {
+        transform-origin: right top;
+        right: 0px;
+    }
+
+    #bar {
+        height: 30px;
+        display: flex;
+        justify-content: start;
+        align-items: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    #name {
+        flex: 1;
+        font-weight: 400;
+        font-size: 18px;
+        margin: 0px 0px 0px 5px;
+        color: var(--text-color);
+    }
+
+    #left-arrow,
+    #right-arrow,
+    #exit {
+        height: 25px;
+        width: 25px;
+        background-color: var(--background-color);
+        border-radius: 5px;
+    }
+
+    #left-arrow:hover,
+    #right-arrow:hover,
+    #exit:hover {
+        background-color: var(--background-color-hover);
+    }
+
+    #body {
+        flex: 1;
+        padding: 5px;
+    }
+
+    #resizable {
+        position: absolute;
+        top: 0px;
+        bottom: 0px;
+        width: 3px;
+    }
+
+    #resizable:hover {
+        cursor: ew-resize;
+    }
+
+    .resizable-left {
+        right: 0px;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .resizable-right {
+        left: 0px;
+        border-left: 1px solid var(--border-color);
+    }
+
+    #unfold {
+        display: none;
+        position: absolute;
+        top: 10px;
+        height: 60px;
+        width: 5px;
+        background-color: var(--background-color);
+        border-top: 2px solid var(--border-color);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    #unfold:hover {
+        width: 20px;
+        background-color: var(--point-color);
+    }
+
+    .unfold-left {
+        left: var(--size);
+        border-radius: 0px 10px 10px 0px;
+        border-right: 2px solid var(--border-color);
+    }
+
+    .unfold-right {
+        right: var(--size);
+        border-radius: 10px 0px 0px 10px;
+        border-left: 2px solid var(--border-color);
+    }
+</style>

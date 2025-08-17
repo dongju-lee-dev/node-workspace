@@ -7,7 +7,7 @@ class ToolBase:
     The load, unload, and work functions must be included.
     """
     
-    async def load(request: web.Request) -> web.Response:
+    def load(self, request: web.Request) -> web.Response:
         """
         You must receive data as aiohttp.web.Request type and return it as aiohttp.web.Response type.
         Called when loading a tool in webui.
@@ -15,7 +15,7 @@ class ToolBase:
         
         return web.Response()
 
-    async def unload(request: web.Request) -> web.Response:
+    def unload(self, request: web.Request) -> web.Response:
         """
         You must receive data as aiohttp.web.Request type and return it as aiohttp.web.Response type.
         Called when the page is terminated or the tool is no longer in use in the webui.
@@ -23,7 +23,7 @@ class ToolBase:
         
         return web.Response()
 
-    async def work(request: web.Request) -> web.Response:
+    def work(self, request: web.Request) -> web.Response:
         """
         You must receive data as aiohttp.web.Request type and return it as aiohttp.web.Response type.
         This function receives a task request from webui and uses a query to receive data.

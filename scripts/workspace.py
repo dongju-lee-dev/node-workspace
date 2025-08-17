@@ -1,6 +1,7 @@
 import json
-from scripts import file
 import aiohttp.web as web
+from scripts import file
+from scripts import setting
 
 WORKSPACE_PATH = "save/workspace"
 
@@ -12,6 +13,12 @@ space: list
 def init():
     if not file.existe_directory(WORKSPACE_PATH):
         file.create_directory(WORKSPACE_PATH)
+
+    if not setting.existe("externalSaveWorkspacePath"):
+        setting.add("externalSaveWorkspacePath", [])
+
+    if not setting.existe("lastOpenWorkspaceName"):
+        setting.set("lastOpenWorkspaceName", "")
 
     return [
         web.get("/workspace/save", save_handle),
@@ -52,6 +59,8 @@ def save_handle(request: web.Request):
         return web.Response(
             text=rename(request.query.get("old_name"), request.query.get("new_name"))
         )
+    elif command == "lastOpen":
+        return web.Response(text=setting.get("lastOpenWorkspaceName"))
     else:
         return web.Response(text=f"error : {command} is not a valid command.")
 
@@ -67,6 +76,8 @@ def list_to_str():
             buff += f"{value},"
         else:
             buff += f"{value}"
+
+    # 외부 저장 주소 기능 추가 해야함
     
     return buff
 
