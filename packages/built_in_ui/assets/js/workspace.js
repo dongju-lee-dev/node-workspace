@@ -17,24 +17,23 @@ icon.style.backgroundSize = 'cover';
 
 dataBase.get('layout')['leftTop'].appendChild(icon);
 
-fetch('/packages/assets/built_in_ui/assets/html/workspace-content.html')
-    .then(response => {
-        return response.text();
-    })
-    .then(data => {
-        dataBase.get('SetSidePanelEvent')(
-            icon,
-            'Workspace',
-            data,
-            400,
-            (doc) => {
-                fetch('/workspace/save?command=list')
-                    .then(response => response.text())
-                    .then(data => init(doc, data));
-            },
-            null
-        );
-    });
+const response = await fetch('/packages/assets/built_in_ui/assets/html/workspace-content.html');
+const data = await response.text();
+
+dataBase.get('SetSidePanelEvent')(
+    icon,
+    'built_in_ui_workspace',
+    'Workspace',
+    data,
+    400,
+    800,
+    (doc) => {
+        fetch('/workspace/save?command=list')
+            .then(response => response.text())
+            .then(data => init(doc, data));
+    },
+    null
+);
 
 let currentInput = null;
 
@@ -76,6 +75,7 @@ function createItem(name) {
 
     li.addEventListener('click', (e) => {
         //dataBase.get('workSpace')
+        // 여기에요 ==============================================
 
         console.log('open')
     });
@@ -112,9 +112,11 @@ function createItem(name) {
     img2.addEventListener('click', (e) => {
         e.stopPropagation();
 
-        fetch(`/workspace/save?command=delete&name=${nameNode.textContent}`);
-
-        li.remove();
+        if (confirm(`'${nameNode.textContent}' Are you sure you want to delete the workspace?`)) {
+            fetch(`/workspace/save?command=delete&name=${nameNode.textContent}`);
+    
+            li.remove();
+        }
     });
 
     span.appendChild(img1);

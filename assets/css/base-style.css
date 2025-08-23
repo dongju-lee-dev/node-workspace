@@ -101,6 +101,22 @@ li:hover {
     justify-content: flex-end;
 }
 
+#field-point-top,
+#field-point-bottom {
+    position: absolute;
+    justify-content: center;
+    display: flex;
+    width: 100%;
+}
+
+#field-point-top {
+    top: 50px;
+}
+
+#field-point-bottom {
+    bottom: 25px;
+}
+
 .icon {
     margin: 6px;
     height: 36px;

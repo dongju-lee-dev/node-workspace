@@ -9,17 +9,6 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# base-script.js에서 tool 로드에서 병렬로 로드하는 것으로 변경한다.
-# 그리고 dataBase에 toolLoadEnd 이벤트를 추가한다.
-# 로드가 끝나면 toolLoadEnd 이벤트를 실행한다.
-# 그 이후 toolLoadEnd는 메모리에서 제거한다.
-# 그 이후 제거되었건 sidePanel state와 sidePanel reload를 부활 시킨다.
-
-# main 태그 안에 field를 추가하여
-# sidePanel 사이에 만든다.
-# field에는 topleft, topcenter, topright, bottomleft, bottomcenter, bottomright를 추가한다.
-# sidePanel보다 z-index 값을 높게하여 감춘다.
-
 # =프 
 # workspace에 command 이벤트 추가
 # - 오른 클릭 시 여러 command를 Dropdown menu로 보여줌

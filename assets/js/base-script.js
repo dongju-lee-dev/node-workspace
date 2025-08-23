@@ -1,8 +1,11 @@
 import { Sidepanel } from "./side-panel.js";
 import { Workspace } from "./work-space.js";
 
+const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
+
 customElements.define('side-panel', Sidepanel);
 customElements.define('work-space', Workspace);
+
 
 let dataBase = new Map();
 
@@ -17,16 +20,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         "rightBottom": document.querySelector('#bottom-bar-right-point'),
     }
 
+    const Field = {
+        "top": document.querySelector('#field-point-top'),
+        "bottom": document.querySelector('#field-point-bottom')
+    }
+
     const sidePanel = document.querySelectorAll('side-panel');
 
     sidePanel[0].setOtherSidepanel(sidePanel[1]);
     sidePanel[1].setOtherSidepanel(sidePanel[0]);
 
+    let toolLoadEnd = [];
+
     //변수
     dataBase.set('layout', layout);
-    dataBase.set('workSpace', document.querySelector('work-space'));
+    dataBase.set('field', Field);
     dataBase.set('leftSidePanel', sidePanel[0]);
     dataBase.set('rightSidePanel', sidePanel[1]);
+    dataBase.set('workSpace', document.querySelector('work-space'));
 
     //함수
     dataBase.set('SetSidePanelEvent', SetSidePanelEvent);
@@ -49,21 +60,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     let tool = (await (await toolResponse).text()).split(',');
 
     if (tool[0] !== '') {
-        tool.forEach(key => {
-            fetch(`/packages/tool?command=load&name=${key}`)
-                .then(response => {
-                    return response.text();
-                })
-                .then(script => {
-                    new Function('dataBase', script)(dataBase);
-                })
-                .catch(error => {
-                    console.log(error);
-                });
-        });
+        dataBase.set('toolLoadEnd', toolLoadEnd);
+
+        await Promise.all(tool.map(async key => {
+            const response = await fetch(`/packages/tool?command=load&name=${key}`);
+            const text = await response.text();
+
+            await new AsyncFunction('dataBase', text)(dataBase);
+        }));
+
+        await Promise.all(toolLoadEnd.map(func => {
+            func();
+        }));
+
+        dataBase.delete('toolLoadEnd');
     }
 
     dataBase.set('tool', tool);
+
+    sidePanel[0].reload(dataBase);
+    sidePanel[1].reload(dataBase);
 });
 
 window.addEventListener('beforeunload', (e) => {
@@ -73,15 +89,17 @@ window.addEventListener('beforeunload', (e) => {
 });
 
 
-function SetSidePanelEvent(element, name, content, width, start, exit) {
+function SetSidePanelEvent(element, key, name, content, minWidth, maxWidth, start, exit) {
     if (!dataBase.has('sidePanel-setTool')) dataBase.set('sidePanel-setTool', new Map());
+
+    dataBase.get('sidePanel-setTool').set(key, { key, name, content, minWidth, maxWidth, start, exit });
 
     element.addEventListener('click', (e) => {
         if (e.button !== 0) return;
 
         e.preventDefault();
 
-        dataBase.get('leftSidePanel').setTool(name, content, width, start, exit);
+        dataBase.get('leftSidePanel').setTool(key, name, content, minWidth, maxWidth, start, exit);
     });
 
     element.addEventListener('contextmenu', (e) => {
@@ -89,6 +107,6 @@ function SetSidePanelEvent(element, name, content, width, start, exit) {
 
         e.preventDefault();
 
-        dataBase.get('rightSidePanel').setTool(name, content, width, start, exit);
+        dataBase.get('rightSidePanel').setTool(key, name, content, minWidth, maxWidth, start, exit);
     });
 }
