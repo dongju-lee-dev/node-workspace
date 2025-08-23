@@ -1,0 +1,95 @@
+<ul id="list" class="list">
+    <li id="add-btn" class="button">new workspace add</li>
+</ul>
+<style>
+    .list {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        bottom: 0px;
+        left: 0px;
+
+        overflow-y: scroll;
+        margin: 0px;
+        padding: 10px;
+    }
+
+    .list::-webkit-scrollbar {
+        width: 8px;
+        background: var(--background-color);
+        border-radius: 5px;
+    }
+
+    .list::-webkit-scrollbar-thumb {
+        background: var(--point-small-color);
+        border-radius: 5px;
+    }
+
+    .list::-webkit-scrollbar-thumb:hover {
+        background: var(--point-color);
+    }
+
+    .list::-webkit-scrollbar-track {
+        background: var(--background-color);
+        border-radius: 5px;
+    }
+
+    .list input[type="text"] {
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--point-color);
+        font-size: 16px;
+        color: var(--text-color);
+        background: var(--background-color);
+    }
+
+    .item {
+        position: relative;
+        list-style-type: none;
+        padding: 2px 15px 2px 15px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+
+        text-decoration: none;
+        color: var(--text-color);
+    }
+
+    .item:hover {
+        background-color: var(--background-color-hover);
+        color: var(--text-color-hover);
+    }
+
+    .icon-layout {
+        position: absolute;
+        top: 2px;
+        right: 15px;
+        bottom: 2px;
+    }
+
+    .icon {
+        height: 100%;
+        margin-left: 5px;
+        object-fit: contain;
+
+        cursor: pointer;
+        color: var(--text-color);
+    }
+
+    .icon:hover {
+        color: var(--point-color);
+    }
+
+    .button {
+        padding: 2px 15px 2px 15px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+
+        background-color: var(--point-color);
+        color: var(--text-color-hover);
+        cursor: pointer;
+    }
+
+    .button:hover {
+        background-color: var(--point-small-color);
+    }
+</style>

@@ -8,6 +8,15 @@
     --point-small-color: rgb(0, 128, 0);
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-color);
+}
+
 header {
     position: fixed;
     top: 0px;
@@ -78,10 +87,27 @@ li:hover {
     position: absolute;
     top: 0px;
     left: 0px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-start;
 }
 
 .right-point {
     position: absolute;
     top: 0px;
     right: 0px;
+    height: 50px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.icon {
+    margin: 6px;
+    height: 36px;
+    width: 36px;
+}
+
+.icon:hover {
+    cursor: pointer;
+    background-color: var(--background-color-hover);
 }

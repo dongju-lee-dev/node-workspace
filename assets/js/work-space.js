@@ -79,13 +79,11 @@ export class Workspace extends HTMLElement {
         e.preventDefault();
 
         this.isMovement = false;
-        this.SaveWorkspaceState();
     }
     MovementMouseLeave = (e) => {
         e.preventDefault();
 
         this.isMovement = false;
-        this.SaveWorkspaceState();
     }
 
     ZoomWheel = (e) => {
@@ -110,12 +108,7 @@ export class Workspace extends HTMLElement {
             this.positionY = e.clientY - worldY * this.scale;
 
             this.updateSpace();
-            this.SaveWorkspaceState();
             this.rafId = null;
         });
-    }
-
-    SaveWorkspaceState() {
-        fetch(`/setting?command=set&key=workspace-state&data=${this.positionX},${this.positionY},${this.scale}`);
     }
 }

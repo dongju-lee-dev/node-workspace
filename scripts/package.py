@@ -47,7 +47,7 @@ def init():
         web.get("/packages", package_handle),
         web.get("/packages/node", node_handle),
         web.get("/packages/tool", tool_handle),
-        web.get("/packages/asset/{tail:.*}", asset_handle),
+        web.get("/packages/assets/{tail:.*}", asset_handle),
     ]
 
 
@@ -291,4 +291,4 @@ def set_tool(package_name: str, tool_name: str, tool_path: str, tool_class_name:
 
 
 def asset_handle(request: web.Request):
-    return web.FileResponse(f"packages/{request.path[6:]}")
+    return web.FileResponse(f"packages/{request.path[16:]}")

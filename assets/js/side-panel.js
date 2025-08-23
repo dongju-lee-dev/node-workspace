@@ -4,9 +4,9 @@ export class Sidepanel extends HTMLElement {
     size;
     otherSidepanel;
 
-    key = '';
     name;
     content;
+    width;
     exit;
 
     constructor() {
@@ -42,22 +42,24 @@ export class Sidepanel extends HTMLElement {
 
         this.shadowRoot.innerHTML = Sidepanel.html;
 
+        this.size = 0;
+
         this.name = this.shadowRoot.querySelector('#name');
         this.content = this.shadowRoot.querySelector('#content');
+        this.width = 0;
+        this.exit = null;
 
         this.leftArrow = this.shadowRoot.querySelector('#left-arrow');
         this.rightArrow = this.shadowRoot.querySelector('#right-arrow');
-        this.exit = this.shadowRoot.querySelector('#exit');
+        this.exitIcon = this.shadowRoot.querySelector('#exit');
         this.resizable = this.shadowRoot.querySelector('#resizable');
         this.unfold = this.shadowRoot.querySelector('#unfold');
 
-        this.exit.addEventListener('click', this.Exit);
+        this.exitIcon.addEventListener('click', this.Exit);
         this.resizable.addEventListener('mousedown', this.ResizableMouseDown);
         document.addEventListener('mousemove', this.ResizableMouseMove);
         document.addEventListener('mouseup', this.ResizableMouseUp);
         this.unfold.addEventListener('click', this.Unfold);
-
-        let data;
 
         if (this.getAttribute('point') === 'left') {
             this.classList.add('left');
@@ -66,8 +68,6 @@ export class Sidepanel extends HTMLElement {
 
             this.leftArrow.addEventListener('click', this.Fold);
             this.rightArrow.addEventListener('click', this.Change);
-
-            data = (await (await fetch('/setting?command=get&key=left-side-panel-state')).text()).split('.');
         }
         else {
             this.classList.add('right');
@@ -76,21 +76,7 @@ export class Sidepanel extends HTMLElement {
 
             this.leftArrow.addEventListener('click', this.Change);
             this.rightArrow.addEventListener('click', this.Fold);
-
-            data = (await (await fetch('/setting?command=get&key=right-side-panel-state')).text()).split('.');
         }
-
-        //size.activate.toolKey
-
-        this.size = data[0];
-        this.style.setProperty('--size', `${data[0]}px`);
-
-        if (data[1] === '') this.Fold(null);
-
-        if (data[2] === '')
-            this.style.display = 'none';
-        else
-            this.key = data[2];
     }
 
     Fold = (e) => {
@@ -108,19 +94,27 @@ export class Sidepanel extends HTMLElement {
     }
 
     Change = (e) => {
-        let key = this.otherSidepanel.getToolKey();
         let name = this.otherSidepanel.getToolName();
         let content = this.otherSidepanel.getToolContent();
+        let width = this.otherSidepanel.getToolWidth();
         let exit = this.otherSidepanel.getToolExit();
 
-        this.otherSidepanel.setTool(this.getToolKey(), this.getToolName(), this.getToolContent(), this.getToolExit());
+        this.otherSidepanel.setTool(this.getToolName(), this.getToolContent(), this.getToolWidth(), this.getToolExit());
 
-        this.setTool(key, name, content, exit);
+        if (name !== '')
+            this.setTool(name, content, exit, width);
+        else
+            this.Exit(null);
     }
 
     Exit = (e) => {
+        if (this.exit !== null) this.exit(this.content);
+
         this.style.display = 'none';
-        this.exit();
+        this.size = 0;
+        this.name.textContent = '';
+        this.content.innerHTML = '';
+        this.width = 0;
     }
 
     isResizable = false;
@@ -132,11 +126,10 @@ export class Sidepanel extends HTMLElement {
     ResizableMouseMove = (e) => {
         if (!this.isResizable) return;
 
-        console.log(e.clientX);
-        console.log(window.innerWidth - this.otherSidepanel.size);
-
         if (this.getAttribute('point') === 'left') {
             if (e.clientX < window.innerWidth - this.otherSidepanel.size && e.clientX > 50) {
+                if (e.clientX < this.width) return;
+
                 this.size = e.clientX;
                 this.style.setProperty('--size', `${e.clientX}px`);
             }
@@ -144,6 +137,8 @@ export class Sidepanel extends HTMLElement {
         else {
             const buff = window.innerWidth - e.clientX;
             if (e.clientX > this.otherSidepanel.size && buff > 50) {
+                if (buff < this.width) return;
+
                 this.size = buff;
                 this.style.setProperty('--size', `${buff}px`);
             }
@@ -156,24 +151,26 @@ export class Sidepanel extends HTMLElement {
         if (!this.isResizable) return;
 
         this.isResizable = false;
-        this.SaveSidePanelState();
     }
 
     setOtherSidepanel(Sidepanel) {
         this.otherSidepanel = Sidepanel;
     }
 
-    setTool(key, name, content, exit) {
+    setTool(name, content, width, start, exit) {
+        if (this.name.textContent === name) return;
+
         this.style.display = 'flex';
-        this.key = key;
+        this.style.setProperty('--size', `${width}px`);
+
+        this.size = width;
+
         this.name.textContent = name;
         this.content.innerHTML = content;
+        this.width = width;
         this.exit = exit;
 
-        this.SaveSidePanelState();
-    }
-    getToolKey() {
-        return this.key;
+        if (start !== null) start(this.content);
     }
     getToolName() {
         return this.name.textContent;
@@ -181,18 +178,10 @@ export class Sidepanel extends HTMLElement {
     getToolContent() {
         return this.content.innerHTML;
     }
+    getToolWidth() {
+        return this.width;
+    }
     getToolExit() {
         return this.exit;
-    }
-    reloadTool(dataBase) {
-        if (this.key === '') return;
-
-        const data = dataBase.get('sidepanel-setTool').get(this.key)();
-
-        this.setTool(data.key, data.name, data.content, data.exit);
-    }
-
-    SaveSidePanelState() {
-        fetch(`/setting?command=set&key=${this.getAttribute('point')}-side-panel-state&data=${this.size}.${this.unfold.style.display === 'flex' ? '' : 'o'}.${this.key}`);
     }
 }

@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let toolResponse = fetch('/packages/tool?command=list');
 
     const layout = {
-        "leftTop":document.querySelector('#top-bar-left-point'),
-        "rightTop":document.querySelector('#top-bar-right-point'),
-        "leftBottom":document.querySelector('#bottom-bar-left-point'),
-        "rightBottom":document.querySelector('#bottom-bar-right-point'),
+        "leftTop": document.querySelector('#top-bar-left-point'),
+        "rightTop": document.querySelector('#top-bar-right-point'),
+        "leftBottom": document.querySelector('#bottom-bar-left-point'),
+        "rightBottom": document.querySelector('#bottom-bar-right-point'),
     }
 
     const sidePanel = document.querySelectorAll('side-panel');
@@ -46,40 +46,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     dataBase.set('node', node);
 
-    let toolBuff = (await (await toolResponse).text()).split();
+    let tool = (await (await toolResponse).text()).split(',');
 
-    if (toolBuff[0] !== '') {
-        Promise.all(
-            toolBuff.map(key =>
-                fetch(`${window.location.origin}/packages/tool?command=load&name=${key}`)
-                    .then(response => {
-                        return response.text();
-                    })
-            ))
-            .then(script => {
-                new Function('globalDataBase', script)(dataBase);
-            });
+    if (tool[0] !== '') {
+        tool.forEach(key => {
+            fetch(`/packages/tool?command=load&name=${key}`)
+                .then(response => {
+                    return response.text();
+                })
+                .then(script => {
+                    new Function('dataBase', script)(dataBase);
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+        });
     }
 
-    sidePanel[0].reloadTool(dataBase);
-    sidePanel[1].reloadTool(dataBase);
+    dataBase.set('tool', tool);
 });
 
-function SetSidePanelEvent(element, key, name, content, exit) {
+window.addEventListener('beforeunload', (e) => {
+    dataBase.get('tool').forEach(key => {
+        fetch(`/packages/tool?command=unload&name=${key}`);
+    });
+});
+
+
+function SetSidePanelEvent(element, name, content, width, start, exit) {
     if (!dataBase.has('sidePanel-setTool')) dataBase.set('sidePanel-setTool', new Map());
 
-    dataBase.get('sidePanel-setTool').set(key, () => {
-        let sidePanel;
+    element.addEventListener('click', (e) => {
+        if (e.button !== 0) return;
 
-        if (e.button === 0)
-            sidePanel = dataBase.get('leftSidePanel');
-        else if (e.button === 2)
-            sidePanel = dataBase.get('rightSidePanel');
+        e.preventDefault();
 
-        sidePanel.set(key, name, content, exit)
+        dataBase.get('leftSidePanel').setTool(name, content, width, start, exit);
     });
 
-    element.addEventListener('click', (e) => {
-        dataBase.get('sidePanel-setTool').get(key)();
+    element.addEventListener('contextmenu', (e) => {
+        if (e.button !== 2) return;
+
+        e.preventDefault();
+
+        dataBase.get('rightSidePanel').setTool(name, content, width, start, exit);
     });
 }

@@ -9,29 +9,65 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# 2
-# 패키지 방식으로 built_in_ui 시리즈 개발
-# bulit_in_ui_setting
-# built_in_ui_package
-# built_in_ui_workspace
-# built_in_ui_workspace_save
-# built_in_ui_icon
+# base-script.js에서 tool 로드에서 병렬로 로드하는 것으로 변경한다.
+# 그리고 dataBase에 toolLoadEnd 이벤트를 추가한다.
+# 로드가 끝나면 toolLoadEnd 이벤트를 실행한다.
+# 그 이후 toolLoadEnd는 메모리에서 제거한다.
+# 그 이후 제거되었건 sidePanel state와 sidePanel reload를 부활 시킨다.
 
-# 3
-# 노드 생성
-# 노드 연결
+# main 태그 안에 field를 추가하여
+# sidePanel 사이에 만든다.
+# field에는 topleft, topcenter, topright, bottomleft, bottomcenter, bottomright를 추가한다.
+# sidePanel보다 z-index 값을 높게하여 감춘다.
 
-# 4
-# workspace 연동
-# workspace 로드, 언로드, 세이브
-# workspace 코드 제작 기술 개발
-# 글로벌 변수 기능
-# 워크스페이스를 불러오면 글로벌 변수 기능이 있는데 
-# 코드를 실행하면 글로벌 변수에 접근하여 변경이 가능하며 코드 실행이 끝이 나도 글로벌 변수는 사라지지 않는다.
+# =프 
+# workspace에 command 이벤트 추가
+# - 오른 클릭 시 여러 command를 Dropdown menu로 보여줌
+# - command를 클릭하면 그 command를 실행함
 
-# 5
+# =백
+# workspace node
+# - 노드는 code, design만이 존재한다. 아마도?
+#
+# workspace node link
+# - 노드를 연결하는 것을 개발
+# - 노드를 실행하는 것은 node link이다.
+# - ui에서 실행하고자 하는 노드를 클릭하여 선택 후 ui에 있는 실행 버튼을 누르면 처음 부터 실행된다.
+# - 콘솔의 정보를 web으로 전송한다.
+#
+# workspace memory
+# - 작업 공간을 열었을때 부터 닫을떄 까지 수동적으로 메모리를 관리한다.
+# - 메모리는 타입이 존재하면 고유 이름이 존재한다.
+# - 사전을 통해서 개발하면 된 것 같아.
+
+# 파이썬의 대화형 그것이랑 유사함
+
+# bulit_in_ui
+# - icon : 완성
+# - workspace : name : 완성, workspace list : 완성, workspace command : 미완성, workspace field : 미안성
+# - package : package 삭제 UI 추가, github에서 다운로드 UI 추가
+# - setting : dataBase에 setting page activate 이벤트 추가하여 완성하기?
+# - workspace menory view : 안 만듬
+# - console view : 안 만듬
+# 개발 끝나면 리펙토링 한 번 하자
+
+# built_in_node
+# 간단한 수학 노드
+# 정수, 실수, 문자 메모리 할당 노드
+
+# web workspace에 작업 전달 기능 추가
+# web workspace에 코드 실행 시 web소켓 연결
+
 # 패키지에 로컬 폴더를 집어 넣는 기능 추가
 # 외부 저장 작업 공간 주소 기능 추가
+
+# setup에서 파이썬 파일 실행하여 built_in_node, built_in_ui의 setup.json으로 설치해야할 것을 설치
+
+# package 개발 순서
+# hw_info
+# torch
+# numpy
+# aiohttp
 
 setting.read()
 

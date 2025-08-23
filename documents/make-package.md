@@ -33,8 +33,8 @@ Only packages that can be installed with pip are allowed.<br>
     "tool":[
         {
             "name": "tool name",
-            "path": "tool code file path. But the Python import method. (ex: tool.ui)"
-            "class_name": "tool code class name",
+            "path": "tool code file path. But the Python import method. (ex: tool.ui)",
+            "class_name": "tool code class name"
         },
         ...
     ]
