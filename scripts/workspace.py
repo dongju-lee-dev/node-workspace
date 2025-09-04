@@ -1,10 +1,38 @@
-import aiohttp.web as web
+import asyncio
+import struct
+import time
+from aiohttp import web, WSMsgType
 from scripts import file
+from scripts import package
 from scripts import setting
+from scripts.node import NodeData
+from dataclasses import dataclass
 
 WORKSPACE_PATH = "save/workspace"
 
-path: str
+
+class NodePortAddress:
+    id: int
+    port: int
+
+    def __init__(self):
+        self.id = None
+        self.port = None
+
+
+@dataclass
+class Node:
+    data: NodeData
+    input: list[NodePortAddress]
+    output: list[list[NodePortAddress]]
+    output_buff: list[any]
+    position_x: float
+    position_y: float
+    content: str
+
+
+node: dict[int, Node]
+memory: dict[str, any]
 
 
 def init():
@@ -18,13 +46,13 @@ def init():
         setting.set("lastOpenWorkspaceName", "")
 
     return [
-        web.get("/workspace/save", save_handle),
-        web.get("/workspace/data/get", get_handle),
-        web.post("/workspace/data/post", post_handle),
+        web.get("/workspace", workspace_handle),
+        web.get("/workspace/editor", editor_handle),
+        web.get("/workspace/runtime", runtime_handle),
     ]
 
 
-def save_handle(request: web.Request):
+async def workspace_handle(request: web.Request):
     """
     A handle that manages storage.
     Give a command with command.
@@ -39,30 +67,31 @@ def save_handle(request: web.Request):
     """
 
     command = request.query.get("command")
+    result = ""
 
     if command == "list":
-        return web.Response(text=list_to_str())
+        result = workspace_list_to_str()
     elif command == "new":
-        return web.Response(text=new(request.query.get("name")))
+        result = workspace_new(request.query.get("name"))
     elif command == "delete":
-        return web.Response(text=delete(request.query.get("name")))
+        result = workspace_delete(request.query.get("name"))
     elif command == "load":
-        return web.Response(text=load(request.query.get("name")))
-    elif command == "unload":
-        return web.Response(text=unload())
+        result = workspace_load(request.query.get("name"))
     elif command == "save":
-        return web.Response(text=save())
+        result = workspace_save()
     elif command == "rename":
-        return web.Response(
-            text=rename(request.query.get("old_name"), request.query.get("new_name"))
+        result = workspace_rename(
+            request.query.get("old_name"), request.query.get("new_name")
         )
     elif command == "lastOpen":
-        return web.Response(text=setting.get("lastOpenWorkspaceName"))
+        result = setting.get("lastOpenWorkspaceName")
     else:
-        return web.Response(text=f"error : {command} is not a valid command.")
+        result = f"error : {command} is not a valid command."
+
+    return web.Response(text=result)
 
 
-def list_to_str():
+def workspace_list_to_str():
     list = file.list_directory(WORKSPACE_PATH)
     list_len = len(list)
     buff = ""
@@ -79,9 +108,7 @@ def list_to_str():
     return buff
 
 
-def new(name: str):
-    global path
-
+def workspace_new(name: str):
     path = f"{WORKSPACE_PATH}/{name}"
 
     if file.existe_directory(path):
@@ -93,7 +120,7 @@ def new(name: str):
     return ""
 
 
-def delete(name: str):
+def workspace_delete(name: str):
     path = f"{WORKSPACE_PATH}/{name}"
 
     try:
@@ -104,9 +131,7 @@ def delete(name: str):
         return str(e)
 
 
-def load(name: str):
-    global path
-
+def workspace_load(name: str):
     try:
         path = f"{WORKSPACE_PATH}/{name}"
 
@@ -118,17 +143,7 @@ def load(name: str):
         return str(e)
 
 
-def unload():
-    global path
-
-    path = None
-
-    return ""
-
-
-def save():
-    global path
-
+def workspace_save():
     try:
 
         return ""
@@ -137,26 +152,361 @@ def save():
         return str(e)
 
 
-def rename(old_name: str, new_name: str):
+def workspace_rename(old_name: str, new_name: str):
     return file.rename_directory(
         f"{WORKSPACE_PATH}/{old_name}", f"{WORKSPACE_PATH}/{new_name}"
     )
 
 
-def get_handle(request: web.Request):
-    """Sends the appropriate value according to the command."""
-
+async def editor_handle(request: web.Request):
     command = request.query.get("command")
+    result = ""
 
-    # if command == "code":
-    #     return web.Response(text=code if code != None else "")
-    # elif command == "space":
-    #     return web.Response(text=space if space != None else "")
-    # else:
-    return web.Response(text=f"error : {command} is not a valid command.")
+    if command == "create":
+        result = editor_create(
+            request.query.get("node_group"),
+            request.query.get("node_name"),
+            request.query.get("position_x"),
+            request.query.get("position_y"),
+        )
+    elif command == "delete":
+        result = editor_delete(
+            request.query.get("id"),
+        )
+    elif command == "movement":
+        result = editor_movement(
+            request.query.get("id"),
+            request.query.get("position_x"),
+            request.query.get("position_y"),
+        )
+    elif command == "content":
+        result = editor_content(
+            request.query.get("id"),
+            request.query.get("content"),
+        )
+    elif command == "link":
+        result = editor_link(
+            request.query.get("id_o"),
+            request.query.get("port_o"),
+            request.query.get("id_i"),
+            request.query.get("port_i"),
+        )
+    elif command == "unlink":
+        result = editor_unlink(
+            request.query.get("id_o"),
+            request.query.get("port_o"),
+            request.query.get("id_i"),
+            request.query.get("port_i"),
+        )
+    else:
+        result = f"error : {command} is not a valid command."
+
+    return web.Response(text=result)
 
 
-def post_handle(request: web.Request):
-    """미완성 : 아마 작업에서의 정보를 수신할때 사용 할 것 같다"""
+def editor_create(node_group, node_name, position_x, position_y):
+    global node
 
-    return web.Response()
+    try:
+        id = 0
+
+        for i in node.keys():
+            id += 1
+
+            if id != i:
+                break
+
+        n_b = package.get_node(node_group, node_name)
+        i_b = [NodePortAddress() for _ in range(n_b.meta["input"].length)]
+        o_b = [NodePortAddress() for _ in range(n_b.meta["output"].length)]
+        o_b_b = [None for _ in range(n_b.meta["output"].length)]
+
+        node[id] = Node(
+            n_b,
+            i_b,
+            o_b,
+            o_b_b,
+            float(position_x),
+            float(position_y),
+            "",
+        )
+
+        return f"status=success?id={id}"
+
+    except Exception as e:
+        return f"status=error?message={str(e)}"
+
+
+def editor_delete(id):
+    global node
+
+    try:
+        id = str(id)
+
+        for ipa in node[id].input:
+            for opa in node[ipa.id].output[ipa.port]:
+                if opa.id == ipa.id:
+                    node[ipa.id].output[ipa.port].remove(opa)
+                    break
+
+        for opal in node[id].output:
+            for opa in opal:
+                node[opa.id].input[opa.port].id = None
+                node[opa.id].input[opa.port].port = None
+
+        del node[id]
+
+        return "status=success"
+
+    except Exception as e:
+        return f"status=error?message={str(e)}"
+
+
+def editor_movement(id, position_x, position_y):
+    try:
+        id = int(id)
+
+        node[id].position_x = float(position_x)
+        node[id].position_y = float(position_y)
+
+        return "status=success"
+
+    except Exception as e:
+        return f"status=error?message={str(e)}"
+
+
+def editor_content(id, content):
+    global node
+
+    try:
+        id = int(id)
+
+        node[id].content = content
+
+        return "status=success"
+
+    except Exception as e:
+        return f"status=error?message={str(e)}"
+
+
+def editor_link(id_o, port_o, id_i, port_i):
+    global node
+
+    try:
+        id_o = int(id_o)
+        port_o = int(port_o)
+        id_i = int(id_i)
+        port_i = int(port_i)
+
+        pa = NodePortAddress()
+        pa.id = id_i
+        pa.port = port_i
+
+        node[id_o].output[port_o].append(pa)
+
+        node[id_i].input[port_i].id = id_o
+        node[id_i].input[port_i].port = port_o
+
+        return "status=success"
+
+    except Exception as e:
+        return f"status=error?message={str(e)}"
+
+
+def editor_unlink(id_i, port_i, id_o, port_o):
+    global node
+
+    try:
+        id_o = int(id_o)
+        port_o = int(port_o)
+        id_i = int(id_i)
+        port_i = int(port_i)
+
+        pa = NodePortAddress()
+        pa.id = id_i
+        pa.port = port_i
+
+        node[id_o].output[port_o].remove(pa)
+
+        node[id_i].input[port_i].id = None
+        node[id_i].input[port_i].port = None
+
+        return "status=success"
+
+    except Exception as e:
+        return f"status=error?message={str(e)}"
+
+
+async def runtime_handle(request: web.Request):
+    ws = web.WebSocketResponse()
+
+    global node
+
+    try:
+        await ws.prepare()
+
+        node_network = runtime_node_network(request.query.get("select_id"))
+        node_layer = runtime_node_layer(node_network)
+
+        ncr = runtime_content_read(node_network, ws)
+        ncw = dict.fromkeys(ncr, bytearray)
+
+        for nd in node_layer:
+            for k in nd:
+                runtime_node_play(nd[k], k, node_layer, ws, ncr[k], ncw[k])
+
+        runtime_content_write(ncw, ws)
+
+    except Exception as e:
+        await ws.close()
+
+        print(str(e))
+
+    return ws
+
+
+def runtime_node_network(center_ID):
+    global node
+
+    nn: dict[int, Node] = {}
+    nn[center_ID] = node[center_ID]
+
+    for pa in node[center_ID].input:
+        runtime_node_network_chain(nn, pa)
+
+    for pal in node[center_ID].output:
+        for pa in pal:
+            runtime_node_network_chain(nn, pa)
+
+    return nn
+
+
+def runtime_node_network_chain(nn: dict[int, Node], pa: NodePortAddress):
+    global node
+
+    if pa.id in nn:
+        return
+
+    nn[pa.id] = node[pa.id]
+
+    for pa in node[pa.id].input:
+        runtime_node_network_chain(nn, pa)
+
+    for pal in node[pa.id].output:
+        for pa in pal:
+            runtime_node_network_chain(nn, pa)
+
+
+def runtime_node_layer(nn: dict[int, Node]):
+    nl: list[dict[int, Node]] = []
+    nl.append({})
+
+    for k in nn:
+        if len(nn[k].output) == 0:
+            nl[0][k] = nn[k]
+
+    for k in nl[0]:
+        for pal in nl[0][k].output:
+            for pa in pal:
+                runtime_node_layer_down(nn, nl, pa, 1)
+
+    layer = len(nl)
+
+    for nlr in reversed(nl):
+        layer -= 1
+
+        for nk in nlr:
+            for nlrb in reversed(nl[:layer]):
+                if nk in nlrb:
+                    del nlrb[nk]
+
+    return nl
+
+
+def runtime_node_layer_down(
+    nn: dict[int, Node], nl: list[dict[int, Node]], pa: NodePortAddress, i: int
+):
+    if len(nl) <= i:
+        nl.append({})
+
+    nl[i][pa.id] = nn[pa.id]
+
+    i += 1
+
+    for pal in nn[pa.id].output:
+        for pa in pal:
+            runtime_node_layer_down(nn, nl, pa, i)
+
+
+async def runtime_content_read(nn: dict[int, Node], ws: web.WebSocketResponse):
+    id_list = ",".join(str(k) for k in nn.keys())
+
+    await ws.send_bytes(f"command=content_read?id_list={id_list}".encode("utf-8"))
+
+    data = await ws.receive_bytes()
+    result = {}
+    offset = 0
+
+    while offset < len(data):
+        key = struct.unpack(">I", data[offset : offset + 4])[0]
+        offset += 4
+
+        value_length = struct.unpack(">I", data[offset : offset + 4])[0]
+        offset += 4
+
+        value = data[offset : offset + value_length]
+        offset += value_length
+
+        if offset < len(data) and data[offset : offset + 1] == b",":
+            offset += 1
+
+        result[key] = value
+
+    return result
+
+
+async def runtime_content_write(nc: dict[int, bytes], ws: web.WebSocketResponse):
+    buffer = bytearray()
+
+    for k in nc:
+        if buffer:
+            buffer.extend(b",")
+
+        buffer.extend(struct.pack(">I", k) + struct.pack(">I", len(nc[k])) + nc[k])
+
+    await ws.send_bytes(buffer)
+    await ws.close()
+
+
+async def runtime_node_play(
+    node: Node,
+    id: int,
+    nn: dict[int, Node],
+    ws: web.WebSocketResponse,
+    ncr: bytes,
+    ncw: bytearray,
+):
+    global memory
+
+    try:
+        age = []
+
+        for pa in node.input:
+            age.append(nn[pa.id].output_buff[pa.port])
+
+        if "system_access" in node.data.meta:
+            keys = {}
+            keys["_memory"] = memory
+            keys["_content_read"] = ncr
+            keys["_content_write"] = ncw
+
+            await node.data.function(*age, **keys)
+        else:
+            await node.data.function(*age)
+
+        ws.send_str(f"status=success?id={id}")
+        return True
+
+    except Exception as e:
+        ws.send_str(f"status=error?id={id}error={str(e)}")
+        return False

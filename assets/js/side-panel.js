@@ -125,10 +125,13 @@ export class Sidepanel extends HTMLElement {
         let maxWidth = this.otherSidepanel.getToolMaxWidth();
         let exit = this.otherSidepanel.getToolExit();
 
-        this.otherSidepanel.setTool(this.getToolKey(), this.getToolName(), this.getToolContent(), this.getToolMinWidth(), this.getToolMaxWidth(), this.getToolStart(), this.getToolExit());
+        if (this.key !== '')
+            this.otherSidepanel.setToolContent(this.getToolKey(), this.getToolName(), this.getToolContent(), this.getToolMinWidth(), this.getToolMaxWidth(), this.getToolExit());
+        else
+            this.otherSidepanel.Exit(null);
 
-        if (name !== '')
-            this.setTool(key, name, content, minWidth, maxWidth, exit);
+        if (key !== '')
+            this.setToolContent(key, name, content, minWidth, maxWidth, exit);
         else
             this.Exit(null);
     }
@@ -191,8 +194,15 @@ export class Sidepanel extends HTMLElement {
     }
 
     setTool(key, name, content, minWidth, maxWidth, start, exit) {
-        if (this.key === key) return;
+        if (this.otherSidepanel.getToolKey() !== key) {
+            this.setToolContent(key, name, content, minWidth, maxWidth, exit);
 
+            if (start !== null) start(this.content);
+        }
+        else
+            this.Change(null);
+    }
+    setToolContent(key, name, content, minWidth, maxWidth, exit) {
         if (this.size < minWidth) this.size = minWidth;
         if (this.size > maxWidth) this.size = maxWidth;
 
@@ -208,8 +218,6 @@ export class Sidepanel extends HTMLElement {
 
         this.Unfold(null);
         this.SaveState();
-
-        if (start !== null) start(this.content);
     }
     getToolKey() {
         return this.key;
@@ -236,7 +244,7 @@ export class Sidepanel extends HTMLElement {
             const data = dataBase.get('sidePanel-setTool').get(this.key);
 
             if (data == null) return;
-            
+
             if (this.size < data.minWidth) this.size = data.minWidth;
             if (this.size > data.maxWidth) this.size = data.maxWidth;
 

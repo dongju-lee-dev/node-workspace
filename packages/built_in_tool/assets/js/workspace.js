@@ -12,23 +12,23 @@ dataBase.get('layout')['leftTop'].appendChild(text);
 const icon = document.createElement('div');
 
 icon.classList.add('icon');
-icon.style.backgroundImage = 'url(/packages/assets/built_in_ui/assets/image/workspace_save_icon.png)';
+icon.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_save_icon.png)';
 icon.style.backgroundSize = 'cover';
 
 dataBase.get('layout')['leftTop'].appendChild(icon);
 
-const response = await fetch('/packages/assets/built_in_ui/assets/html/workspace-content.html');
+const response = await fetch('/packages/assets/built_in_tool/assets/html/workspace-content.html');
 const data = await response.text();
 
 dataBase.get('SetSidePanelEvent')(
     icon,
-    'built_in_ui_workspace',
+    'built_in_tool_workspace',
     'Workspace',
     data,
     400,
     800,
     (doc) => {
-        fetch('/workspace/save?command=list')
+        fetch('/workspace?command=list')
             .then(response => response.text())
             .then(data => init(doc, data));
     },
@@ -55,7 +55,7 @@ function init(doc, data) {
 }
 
 function createItem(name) {
-    fetch(`/workspace/save?command=new&name=${name}`);
+    fetch(`/workspace?command=new&name=${name}`);
 
     const li = document.createElement('li');
     const span = document.createElement('span');
@@ -66,8 +66,8 @@ function createItem(name) {
     span.classList.add('icon-layout');
     img1.classList.add('icon');
     img2.classList.add('icon');
-    img1.src = '/packages/assets/built_in_ui/assets/image/workspace_rename_icon.png';
-    img2.src = '/packages/assets/built_in_ui/assets/image/workspace_delete_icon.png';
+    img1.src = '/packages/assets/built_in_tool/assets/image/workspace_rename_icon.png';
+    img2.src = '/packages/assets/built_in_tool/assets/image/workspace_delete_icon.png';
 
     const nameNode = document.createElement('span');
     nameNode.textContent = name;
@@ -96,7 +96,10 @@ function createItem(name) {
             e.stopPropagation();
 
             if (e.key === 'Enter') {
-                fetch(`/workspace/save?command=new&old_name=${nameNode.textContent}&new_name=${input.value}`);
+                console.log(nameNode.textContent)
+                console.log(input.value)
+
+                fetch(`/workspace?command=rename&old_name=${nameNode.textContent}&new_name=${input.value}`);
 
                 nameNode.textContent = input.value;
                 li.replaceChild(nameNode, input);
@@ -113,7 +116,7 @@ function createItem(name) {
         e.stopPropagation();
 
         if (confirm(`'${nameNode.textContent}' Are you sure you want to delete the workspace?`)) {
-            fetch(`/workspace/save?command=delete&name=${nameNode.textContent}`);
+            fetch(`/workspace?command=delete&name=${nameNode.textContent}`);
     
             li.remove();
         }

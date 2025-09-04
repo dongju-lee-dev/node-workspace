@@ -4,7 +4,6 @@ import aiohttp.web as web
 def init():
     return [
         web.get("/", index_handle),
-        #web.get("/")
         web.get("/assets/{tail:.*}", assets_handle),
     ]
 

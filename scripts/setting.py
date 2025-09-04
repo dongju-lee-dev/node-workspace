@@ -5,10 +5,8 @@ If you add settings to a package and then delete the package and reinstall the p
 the settings will remain unless you directly delete the settings information.
 """
 
-import json
-import aiohttp.web as web
-
-from scripts import file
+import toml
+from aiohttp import web
 
 _setting: dict
 
@@ -44,7 +42,7 @@ def read():
 
     global _setting
 
-    _setting = json.loads(file.read_file("settings/setting.json"))
+    _setting = toml.load("settings/setting.toml")
 
 
 def write():
@@ -52,7 +50,7 @@ def write():
 
     global _setting
 
-    file.write_file("settings/setting.json", json.dumps(_setting))
+    toml.dump(_setting, open("settings/setting.toml", "w"))
 
 
 def get(key: str):

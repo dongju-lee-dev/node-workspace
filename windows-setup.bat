@@ -6,5 +6,7 @@ python -m venv .venv
 CALL .venv\Scripts\activate.bat
 
 pip install aiohttp
+pip install gitpython
+pip install toml
 
 CALL deactivate

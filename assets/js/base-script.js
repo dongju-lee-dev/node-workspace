@@ -10,7 +10,7 @@ customElements.define('work-space', Workspace);
 let dataBase = new Map();
 
 document.addEventListener('DOMContentLoaded', async () => {
-    let nodeResponse = fetch('/packages/node?command=all_node_key');
+    let nodeResponse = fetch('/packages/node?command=list');
     let toolResponse = fetch('/packages/tool?command=list');
 
     const layout = {

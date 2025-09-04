@@ -1,9 +1,10 @@
-import json
+import configparser
 import subprocess
 import sys
-import importlib
-import aiohttp.web as web
 import git
+import inspect
+import importlib
+from aiohttp import web
 from scripts import file
 from scripts.node import NodeData
 from scripts.tool import ToolBase
@@ -12,7 +13,6 @@ PACKAGE_PATH = "packages"
 
 node: dict[str, dict[str, NodeData]]  # node[node_group_name][node_name]
 tool: dict[str, ToolBase]  # tool[tool_name]
-module: dict  # module[index]
 
 
 def init():
@@ -23,25 +23,45 @@ def init():
 
     global node
     global tool
-    global module
 
     node = {}
     tool = {}
-    module = {}
 
     for package_name in file.list_directory(PACKAGE_PATH):
-        start = json.loads(file.read_file(f"{PACKAGE_PATH}/{package_name}/start.json"))
 
-        for buff in start["node"]:
-            set_node(
-                buff["group"],
-                buff["name"],
-                file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['code']}"),
-                file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['desgin']}"),
-            )
+        if file.existe_directory(f"{PACKAGE_PATH}/{package_name}/nodes"):
+            for path in file.list_directory(f"{PACKAGE_PATH}/{package_name}/nodes"):
+                module = importlib.import_module(
+                    f"{PACKAGE_PATH}.{package_name}.nodes.{path[:-3]}"
+                )
 
-        for buff in start["tool"]:
-            set_tool(package_name, buff["name"], buff["path"], buff["class_name"])
+                for name, member in inspect.getmembers(module):
+                    if inspect.isfunction(member):
+                        var_name = f"{member.__name__}_META".upper()
+
+                        if hasattr(module, var_name):
+                            meta = getattr(module, var_name)
+
+                            if meta["node_group"] not in node:
+                                node[meta["node_group"]] = {}
+
+                            node[meta["node_group"]][meta["node_name"]] = NodeData(
+                                member, meta
+                            )
+
+        if file.existe_directory(f"{PACKAGE_PATH}/{package_name}/tools"):
+            for path in file.list_directory(f"{PACKAGE_PATH}/{package_name}/tools"):
+                module = importlib.import_module(
+                    f"{PACKAGE_PATH}.{package_name}.tools.{path[:-3]}"
+                )
+
+                for name, member in inspect.getmembers(module):
+                    if inspect.isclass(member):
+                        var_name = f"{member.__name__}_META".upper()
+
+                        if hasattr(module, var_name):
+                            meta = getattr(module, var_name)
+                            tool[meta["tool_name"]] = member(meta)
 
     return [
         web.get("/packages", package_handle),
@@ -49,36 +69,6 @@ def init():
         web.get("/packages/tool", tool_handle),
         web.get("/packages/assets/{tail:.*}", asset_handle),
     ]
-
-
-def reset():
-    """package reset"""
-
-    global node
-    global tool
-    global module
-
-    node = {}
-    tool = {}
-
-    for package_name in file.list_directory(PACKAGE_PATH):
-        start = json.loads(file.read_file(f"{PACKAGE_PATH}/{package_name}/start.json"))
-
-        for buff in start["Node"]:
-            set_node(
-                buff["group"],
-                buff["name"],
-                file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['code']}"),
-                file.read_file(f"{PACKAGE_PATH}/{package_name}/{buff['desgin']}"),
-            )
-
-        for buff in start["Tool"]:
-            name_buff = buff["name"]
-            module_buff = module[name_buff]
-
-            importlib.reload(module_buff)
-
-            tool[name_buff] = getattr(module_buff, buff["class_name"])()
 
 
 def package_handle(request: web.Request):
@@ -89,15 +79,18 @@ def package_handle(request: web.Request):
     """
 
     command = request.query.get("command")
+    result = ""
 
     if command == "list":
-        return package_list()
+        result = package_list()
     elif command == "add":
-        return package_add(request.query.get("url"))
+        result = package_add(request.query.get("url"))
     elif command == "remove":
-        return package_remove(request.query.get("name"))
+        result = package_remove(request.query.get("name"))
     else:
-        return web.Response(text=f"error : {command} is not a valid command.")
+        result = f"error : {command} is not a valid command."
+
+    return web.Response(text=result)
 
 
 def package_list():
@@ -112,7 +105,7 @@ def package_list():
         else:
             text += f"{name}"
 
-    return web.Response(text=text)
+    return text
 
 
 def package_add(url: str):
@@ -126,9 +119,10 @@ def package_add(url: str):
 
         git.Repo.clone_from(url, file.get_absolute_path(path))
 
-        setup = json.loads(file.read_file(f"{path}/setup.json"))
+        config = configparser.ConfigParser()
+        config.read(f"{path}/config.ini", encoding="utf-8")
 
-        for package_name in setup["package"]:
+        for package_name in config["packages"].split(","):
             subprocess.run(
                 [sys.executable, "-m", "pip", "install", package_name],
                 capture_output=True,
@@ -136,23 +130,19 @@ def package_add(url: str):
                 check=True,
             )
 
-        file.rename_directory(path, f"{PACKAGE_PATH}/{setup['name']}")
+        file.rename_directory(path, f"{PACKAGE_PATH}/{config['name']}")
         file.delete_directory(path)
 
-        reset()
-
-        return web.Response(text="reset")
+        return "reset"
 
     except Exception as e:
-        return web.Response(text=str(e))
+        return str(e)
 
 
 def package_remove(name: str):
     file.delete_directory(f"{PACKAGE_PATH}/{name}")
 
-    reset()
-
-    return web.Response(text="reset")
+    return "reset"
 
 
 def node_handle(request: web.Request):
@@ -163,22 +153,17 @@ def node_handle(request: web.Request):
     """
 
     command = request.query.get("command")
+    result = ""
 
-    if command == "all_node_key":
-        return all_node_key()
-    elif command == "node_code":
-        name = request.query.get("name").split(".")
-        return web.Response(text=str(get_node(name[0], name[1]).code))
-
-    elif command == "node_design":
-        name = request.query.get("name").split(".")
-        return web.Response(text=str(get_node(name[0], name[1]).design))
-
+    if command == "list":
+        result = node_list()
     else:
-        return web.Response(text=f"error : {command} is not a valid command.")
+        result = f"error : {command} is not a valid command."
+
+    return web.Response(text=result)
 
 
-def all_node_key():
+def node_list():
     global node
 
     text = ""
@@ -199,15 +184,7 @@ def all_node_key():
         if n_g_number != 0:
             text += "/"
 
-    return web.Response(text=text)
-
-
-def get_node_group(node_group_name: str):
-    """Returns lits[NodeData]"""
-
-    global node
-
-    return node.get(node_group_name)
+    return text
 
 
 def get_node(node_group_name: str, node_name: str):
@@ -222,17 +199,6 @@ def get_node(node_group_name: str, node_name: str):
     return None
 
 
-def set_node(node_group_name: str, node_name: str, node_code: str, node_desgin: str):
-    """Node group name and node name node code, design value are required."""
-
-    global node
-
-    if node.get(node_group_name) == None:
-        node[node_group_name] = {node_name: NodeData(node_code, node_desgin)}
-    else:
-        node[node_group_name][node_name] = NodeData(node_code, node_desgin)
-
-
 async def tool_handle(request: web.Request):
     """
     list returns the names of all tools you currently have. use command=list
@@ -241,9 +207,10 @@ async def tool_handle(request: web.Request):
     """
 
     command = request.query.get("command")
+    result = ""
 
     if command == "list":
-        return tool_list()
+        result = tool_list()
     elif command == "load":
         return tool[request.query.get("name")].load(request)
     elif command == "unload":
@@ -251,7 +218,9 @@ async def tool_handle(request: web.Request):
     elif command == "work":
         return tool[request.query.get("name")].work(request)
     else:
-        return web.Response(text=f"error : {command} is not a valid command.")
+        result = f"error : {command} is not a valid command."
+
+    return web.Response(text=result)
 
 
 def tool_list():
@@ -267,7 +236,7 @@ def tool_list():
         else:
             text += f"{name}"
 
-    return web.Response(text=text)
+    return text
 
 
 def get_tool(tool_name: str):
@@ -276,18 +245,6 @@ def get_tool(tool_name: str):
     global tool
 
     return tool[tool_name]
-
-
-def set_tool(package_name: str, tool_name: str, tool_path: str, tool_class_name: str):
-    """The function to add a tool requires the name of the package tool class, the tool name, and the location of the tool file."""
-
-    global module
-    global tool
-
-    m_buff = importlib.import_module(f"{PACKAGE_PATH}.{package_name}.{tool_path}")
-
-    module[tool_name] = m_buff
-    tool[tool_name] = getattr(m_buff, tool_class_name)()
 
 
 def asset_handle(request: web.Request):
