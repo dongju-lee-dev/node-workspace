@@ -9,38 +9,49 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# workspace에 command 이벤트 추가
-# - 오른 클릭 시 여러 command를 Dropdown menu로 보여줌
-# - command를 클릭하면 그 command를 실행함
+# work-space : 노드 조작 개발하기 : 이동, 연결
+# work-space : 변경 사항을 이벤트로 콜백
 
 # bulit_in_tool
-# - icon : 완성
-# - workspace : name : 완성, workspace list : 완성, workspace command : 미완성, workspace field : 미안성
 # - package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가
-# - setting : dataBase에 setting page activate 이벤트 추가하여 완성하기?
-# - workspace menory view : 안 만듬
+# - setting : setting 기능을 사용할 수 있게 하기 생성, 삭제, 수정
+# - menory view : 안 만듬
 # - console view : 안 만듬
 
-# 출시 전에 venv 에서 uv 전환 필요
+# 출시 전 단계
+# venv 에서 uv 전환 필요
 # setup.py를 만들어서 미리 설치해야하는 것을 설치하자
 # windows-setup.bat에서 호출함
+# 모든 기본 통신을 json 형식으로 변경
+# 문서 작성 : package, node, tool, workspace
 
 # === v1.0 ===
 
-# 기능 추가
+# 기능 개발 순서
 # 패키지에 로컬 폴더를 집어 넣는 기능 추가
 # 외부 저장 작업 공간 주소 기능 추가
-# 기본 통신 json 형식으로 변경
 
 # 패키지 개발 순서
 # signal : 노드를 원격 실행
-# preview : 이미지, 소리, 모델에 대한 프리뷰 제공
+# preview : 이미지, 소리, 3d모델에 대한 프리뷰 제공
 # torch : ai 돌리기
 # numpy : cpu 가속
 # hw_info : 하드웨어 상태확인
 # aiohttp : 네트워크 작업
+# custom_node : 커스텀 노드
+# tensor_flow : ai 돌리기
+# open_cv : 이미지 처리
 
 # === v1.x ===
+
+# 대규모 공사
+# 다중 사용자 기능
+# 격리된 Tool 기능
+# 프론트 엔드로 대부분의 기능 이동
+# 백엔드는 코드 실행과 ui 전송만
+# 다양한 피드백을 받는다.
+
+# === v2.0 ===
 
 setting.read()
 

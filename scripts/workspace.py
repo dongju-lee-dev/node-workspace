@@ -1,7 +1,7 @@
-import asyncio
 import struct
 import time
-from aiohttp import web, WSMsgType
+from aiohttp import web
+import yaml
 from scripts import file
 from scripts import package
 from scripts import setting
@@ -31,8 +31,8 @@ class Node:
     content: str
 
 
-node: dict[int, Node]
-memory: dict[str, any]
+node: dict[int, Node] = {}
+memory: dict[str, any] = {}
 
 
 def init():
@@ -77,8 +77,10 @@ async def workspace_handle(request: web.Request):
         result = workspace_delete(request.query.get("name"))
     elif command == "load":
         result = workspace_load(request.query.get("name"))
+    elif command == "unload":
+        result = workspace_unload()
     elif command == "save":
-        result = workspace_save()
+        result = workspace_save(request.query.get("name"))
     elif command == "rename":
         result = workspace_rename(
             request.query.get("old_name"), request.query.get("new_name")
@@ -92,20 +94,7 @@ async def workspace_handle(request: web.Request):
 
 
 def workspace_list_to_str():
-    list = file.list_directory(WORKSPACE_PATH)
-    list_len = len(list)
-    buff = ""
-
-    for value in list:
-        list_len -= 1
-        if list_len != 0:
-            buff += f"{value},"
-        else:
-            buff += f"{value}"
-
-    # 외부 저장 주소 기능 추가 해야함
-
-    return buff
+    return ",".join(file.list_directory(WORKSPACE_PATH))
 
 
 def workspace_new(name: str):
@@ -116,6 +105,7 @@ def workspace_new(name: str):
         return "error : There is already a workspace with the same name"
 
     file.create_directory(path)
+    file.create_file(f"{path}/space.nww")
 
     return ""
 
@@ -133,18 +123,37 @@ def workspace_delete(name: str):
 
 def workspace_load(name: str):
     try:
-        path = f"{WORKSPACE_PATH}/{name}"
+        global node
+
+        node = yaml.safe_load(file.read_file(f"{WORKSPACE_PATH}/{name}/space.nww"))
 
         return ""
 
     except Exception as e:
-        path = None
-
         return str(e)
 
 
-def workspace_save():
+def workspace_unload():
     try:
+        global node
+        global memory
+
+        node.clear()
+        memory.clear()
+
+        return ""
+
+    except Exception as e:
+        return str(e)
+
+
+def workspace_save(name: str):
+    try:
+        global node
+
+        file.write_file(
+            f"{WORKSPACE_PATH}/{name}/space.nww", yaml.dump(node, sort_keys=False)
+        )
 
         return ""
 
@@ -345,17 +354,30 @@ async def runtime_handle(request: web.Request):
     try:
         await ws.prepare()
 
+        full_start = time.time()
+
         node_network = runtime_node_network(request.query.get("select_id"))
         node_layer = runtime_node_layer(node_network)
 
         ncr = runtime_content_read(node_network, ws)
         ncw = dict.fromkeys(ncr, bytearray)
 
+        node_start = time.time()
+
         for nd in node_layer:
             for k in nd:
-                runtime_node_play(nd[k], k, node_layer, ws, ncr[k], ncw[k])
+                await runtime_node_play(nd[k], k, node_layer, ws, ncr[k], ncw[k])
+
+        node_end = time.time()
 
         runtime_content_write(ncw, ws)
+
+        full_end = time.time()
+
+        print(f"full time : {full_end - full_start}")
+        print(f"node time : {node_end - node_start}")
+
+        await ws.close()
 
     except Exception as e:
         await ws.close()
@@ -475,7 +497,6 @@ async def runtime_content_write(nc: dict[int, bytes], ws: web.WebSocketResponse)
         buffer.extend(struct.pack(">I", k) + struct.pack(">I", len(nc[k])) + nc[k])
 
     await ws.send_bytes(buffer)
-    await ws.close()
 
 
 async def runtime_node_play(

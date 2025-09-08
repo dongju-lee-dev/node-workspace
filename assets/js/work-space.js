@@ -26,12 +26,16 @@ export class Workspace extends HTMLElement {
         const response = fetch('/setting?command=get&key=workspace-state');
 
         this.space = this.shadowRoot.getElementById('space');
+        this.command = this.shadowRoot.getElementById('command');
 
         this.addEventListener('mousedown', this.MovementMouseDown);
         this.addEventListener('mousemove', this.MovementMouseMove);
         this.addEventListener('mouseleave', this.MovementMouseLeave);
         document.addEventListener('mouseup', this.MovementMouseUp);
         this.addEventListener('wheel', this.ZoomWheel);
+        this.addEventListener('contextmenu', this.CommandContextmenu);
+        this.addEventListener('mouseup', this.CommandMouseUp);
+        document.addEventListener('keydown', this.CommandKeyDown);
 
         let data = (await (await response).text()).split(',');
 
@@ -110,5 +114,68 @@ export class Workspace extends HTMLElement {
             this.updateSpace();
             this.rafId = null;
         });
+    }
+
+    CommandContextmenu = (e) => {
+        e.preventDefault();
+
+        this.command.style.display = "flex";
+
+        let posX = e.clientX;
+        let posY = e.clientY;
+
+        if (posX + this.command.offsetWidth > window.innerWidth)
+            posX -= this.command.offsetWidth;
+        if (posY + this.command.offsetHeight > window.innerHeight)
+            posY -= this.command.offsetHeight;
+
+        this.command.style.left = `${posX}px`;
+        this.command.style.top = `${posY}px`;
+    }
+
+    CommandMouseUp = (e) => {
+        if (e.button != 2)
+            this.command.style.display = "none";
+    }
+
+    CommandKeyDown = (e) => {
+        if (e.key === 'Escape') {
+            this.command.style.display = "none";
+        }
+    }
+
+    setCommand(command, order) {
+        const TEXT_IDX = 0
+        const FUNC_IDX = 1
+
+        if (this.command.children.length > 0) {
+            const line = document.createElement('div');
+
+            line.classList.add('command-line');
+
+            this.command.appendChild(line);
+        }
+
+        const group = document.createElement('div');
+
+        group.classList.add('comamnd-menu-group');
+        group.style.order = order;
+
+        for (let i = 0; i < command.length; ++i) {
+            const menu = document.createElement('div')
+
+            menu.classList.add('command-menu');
+            menu.textContent = command[i][TEXT_IDX];
+            menu.addEventListener('click', command[i][FUNC_IDX]);
+            menu.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.command.style.display = 'none';
+            });
+
+            group.appendChild(menu);
+        }
+
+        this.command.appendChild(group);
     }
 }

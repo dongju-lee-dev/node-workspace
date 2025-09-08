@@ -1,4 +1,5 @@
 <div id="space">
+    <div id="command"></div>
 </div>
 <style>
     :host {
@@ -12,5 +13,37 @@
 
     #space {
         transform-origin: left top;
+    }
+
+    #command {
+        display: none;
+        position: absolute;
+        flex-direction: column;
+        width: 265px;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+    }
+
+    .comamnd-menu-group {
+        width: var(100% - 10px);
+        padding: 5px;
+    }
+
+    .command-menu {
+        color: var(--text-color);
+        padding: 0px 20px 0px 20px;
+    }
+
+    .command-menu:hover {
+        color: var(--text-color-hover);
+        background-color: var(--point-color);
+        border-radius: 2.5px;
+    }
+
+    .command-line {
+        height: 1px;
+        margin: 0px 5px 0px 5px;
+        background-color: var(--border-color);
     }
 </style>

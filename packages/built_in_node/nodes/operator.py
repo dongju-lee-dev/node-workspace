@@ -81,7 +81,7 @@ def mul(a, b):
 
 DIV_META = {
     "node_group": "Operator",
-    "node_name": "/ ",
+    "node_name": "/",
     "input": [
         {
             "name": "a",
@@ -372,7 +372,7 @@ def is_greater_than(a, b) -> bool:
     return a > b
 
 
-IS_GREATER_THAN_OR_EQUAL_META = {
+IS_GREATER_THAN_OR_EQUAL_TO_META = {
     "node_group": "Operator",
     "node_name": ">=",
     "input": [

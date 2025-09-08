@@ -20,11 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         "rightBottom": document.querySelector('#bottom-bar-right-point'),
     }
 
-    const Field = {
-        "top": document.querySelector('#field-point-top'),
-        "bottom": document.querySelector('#field-point-bottom')
-    }
-
     const sidePanel = document.querySelectorAll('side-panel');
 
     sidePanel[0].setOtherSidepanel(sidePanel[1]);
@@ -34,22 +29,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     //변수
     dataBase.set('layout', layout);
-    dataBase.set('field', Field);
+    dataBase.set('workSpace', document.querySelector('work-space'));
+    dataBase.set('workSpaceTop', document.querySelector('#work-space-top'));
+    dataBase.set('workSpaceBottom', document.querySelector('#work-space-bottom'));
+    dataBase.set('window-field', document.querySelector('#window-field'));
     dataBase.set('leftSidePanel', sidePanel[0]);
     dataBase.set('rightSidePanel', sidePanel[1]);
-    dataBase.set('workSpace', document.querySelector('work-space'));
 
     //함수
     dataBase.set('SetSidePanelEvent', SetSidePanelEvent);
 
-    let nodeBuff = (await (await nodeResponse).text()).split();
+    let nodeBuff = (await (await nodeResponse).text()).split('#');
     let node = {};
 
     if (nodeBuff[0] !== '') {
-        for (let nodeTextGroup in nodeBuff) {
-            if (nodeTextGroup === '0') continue;
+        for (let i = 0; i < nodeBuff.length; ++i) {
+            if (nodeBuff[i] === '0') continue;
 
-            let buff = nodeTextGroup.split('.');
+            let buff = nodeBuff[i].split('.');
 
             node[buff[0]] = buff[1].split(',');
         }

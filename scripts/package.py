@@ -157,6 +157,7 @@ def node_handle(request: web.Request):
 
     if command == "list":
         result = node_list()
+
     else:
         result = f"error : {command} is not a valid command."
 
@@ -182,7 +183,7 @@ def node_list():
 
         n_g_number -= 1
         if n_g_number != 0:
-            text += "/"
+            text += "#"
 
     return text
 

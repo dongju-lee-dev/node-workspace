@@ -1,5 +1,7 @@
 //시작과 동시에 fetch로 workspace lastOpen을 통해서 연다.
 
+// == text == 
+
 const text = document.createElement('div');
 
 text.textContent = 'This is workspace name';
@@ -9,6 +11,8 @@ text.style.margin = '8px 5px 10px 5px';
 
 dataBase.get('layout')['leftTop'].appendChild(text);
 
+// == icon ==
+
 const icon = document.createElement('div');
 
 icon.classList.add('icon');
@@ -17,42 +21,33 @@ icon.style.backgroundSize = 'cover';
 
 dataBase.get('layout')['leftTop'].appendChild(icon);
 
-const response = await fetch('/packages/assets/built_in_tool/assets/html/workspace-content.html');
-const data = await response.text();
+// == content ==
 
-dataBase.get('SetSidePanelEvent')(
-    icon,
-    'built_in_tool_workspace',
-    'Workspace',
-    data,
-    400,
-    800,
-    (doc) => {
-        fetch('/workspace?command=list')
-            .then(response => response.text())
-            .then(data => init(doc, data));
-    },
-    null
-);
+const response_wc = await fetch('/packages/assets/built_in_tool/assets/html/workspace-content.html');
+const html_wc = await response_wc.text();
+
+dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_workspace', 'Workspace', html_wc, 400, 800, (doc) => {
+    fetch('/workspace?command=list')
+        .then(response => response.text())
+        .then(data => {
+            const list = doc.querySelector('#list')
+            const button = doc.querySelector('#add-btn');
+
+            button.addEventListener('click', () => {
+                list.appendChild(createItem(`workspace ${list.children.length}`));
+                list.appendChild(button);
+            });
+
+            if (data === '') return;
+
+            data.split(',').forEach(name => {
+                list.appendChild(createItem(name));
+                list.appendChild(button);
+            });
+        });
+}, null);
 
 let currentInput = null;
-
-function init(doc, data) {
-    const list = doc.querySelector('#list')
-    const button = doc.querySelector('#add-btn');
-
-    button.addEventListener('click', () => {
-        list.appendChild(createItem(`workspace ${list.children.length}`));
-        list.appendChild(button);
-    });
-
-    if (data === '') return;
-
-    data.split(',').forEach(name => {
-        list.appendChild(createItem(name));
-        list.appendChild(button);
-    });
-}
 
 function createItem(name) {
     fetch(`/workspace?command=new&name=${name}`);
@@ -74,10 +69,8 @@ function createItem(name) {
     nameNode.style.marginRight = '10px';
 
     li.addEventListener('click', (e) => {
-        //dataBase.get('workSpace')
-        // 여기에요 ==============================================
-
-        console.log('open')
+        // workspace open
+        // text.textContent
     });
 
     img1.addEventListener('click', (e) => {
@@ -96,9 +89,6 @@ function createItem(name) {
             e.stopPropagation();
 
             if (e.key === 'Enter') {
-                console.log(nameNode.textContent)
-                console.log(input.value)
-
                 fetch(`/workspace?command=rename&old_name=${nameNode.textContent}&new_name=${input.value}`);
 
                 nameNode.textContent = input.value;
@@ -117,7 +107,7 @@ function createItem(name) {
 
         if (confirm(`'${nameNode.textContent}' Are you sure you want to delete the workspace?`)) {
             fetch(`/workspace?command=delete&name=${nameNode.textContent}`);
-    
+
             li.remove();
         }
     });
@@ -128,4 +118,97 @@ function createItem(name) {
     li.appendChild(span);
 
     return li;
+}
+
+// == control bar ==
+
+const response_wcb = await fetch('/packages/assets/built_in_tool/assets/html/workspace-control-bar.html');
+const html_wcb = await response_wcb.text();
+
+const workSpaceTop = dataBase.get('workSpaceTop');
+
+workSpaceTop.insertAdjacentHTML('beforeend', html_wcb);
+
+const wcb = workSpaceTop.lastElementChild;
+
+wcb.addEventListener('click', (e) => {
+    // workspace run
+});
+
+// == new node == 
+
+const response_wnn = await fetch('/packages/assets/built_in_tool/assets/html/workspace-new-node.html');
+const html_wnn = await response_wnn.text();
+
+const windowsField = dataBase.get('window-field');
+const node = dataBase.get('node');
+
+windowsField.insertAdjacentHTML('beforeend', html_wnn);
+
+const wnn = windowsField.lastElementChild;
+let list = [];
+let len = Object.keys(node).length;
+let wnnSelect = false;
+
+console.log(node);
+
+for (const key in node) {
+    if (len < node[key].length)
+        len = node[key].length;
+}
+
+for (let i = 0; i < len; ++i) {
+    const element = document.createElement('div');
+
+    element.classList.add('node');
+    element.addEventListener('click', (e) => {
+        if (wnnSelect) {
+            console.log("click");
+
+            //new node
+        } else {
+            wnnInit(node[element.textContent]);
+            wnnSelect = true;
+        }
+    });
+
+    wnn.appendChild(element);
+    list.push(element);
+}
+
+dataBase.get('workSpace').setCommand([['new node', (e) => {
+    let posX = e.clientX;
+    let posY = e.clientY;
+
+    if (posX + wnn.offsetWidth > window.innerWidth)
+        posX -= wnn.offsetWidth;
+    if (posY + wnn.offsetHeight > window.innerHeight)
+        posY -= wnn.offsetHeight;
+
+    wnn.style.display = 'flex';
+    wnn.style.top = `${posY}px`;
+    wnn.style.left = `${posX}px`;
+    wnnSelect = false;
+
+    wnnInit(Object.keys(node));
+}]]);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        wnn.style.display = 'none';
+    }
+});
+
+function wnnInit(textList) {
+    let i = 0;
+
+    for (; i < textList.length; ++i) {
+
+        list[i].textContent = textList[i];
+        list[i].style.display = 'flex';
+    }
+
+    for (; i < list.length; ++i) {
+        list[i].style.display = 'none';
+    }
 }
