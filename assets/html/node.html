@@ -1,0 +1,141 @@
+<div class="node">
+    <div class="node-header">
+        <div id="name"></div>
+    </div>
+    <div class="node-body">
+        <div id="input"></div>
+        <div id="content"></div>
+        <div id="output"></div>
+    </div>
+</div>
+<div class="node-input">
+    <div id="color"></div>
+    <div id="name"></div>
+</div>
+<div class="node-output">
+    <div id="color"></div>
+    <div id="name"></div>
+</div>
+<div class="node-box"></div>
+<svg class="node-link">
+    <path class="node-link-path">
+</svg>
+
+<style>
+    #name {
+        height: 16px;
+        font-size: 16px;
+        color: var(--text-color);
+    }
+
+    #input {
+        top: 16px;
+        bottom: 0px;
+        left: 0px;
+    }
+
+    #output {
+        top: 16px;
+        right: 0px;
+        bottom: 0px;
+    }
+
+    #content {
+        flex-grow: 1;
+        padding: 0 10px;
+        text-align: center;
+    }
+
+    .node {
+        position: absolute;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+        top: 0px;
+        left: 0px;
+        padding: 5px;
+        transform-origin: left top;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+    }
+
+    .node:hover {
+        box-shadow: 0px 0px 4px 2px var(--point-small-color);
+    }
+
+    .node-select {
+        box-shadow: 0px 0px 4px 2px var(--point-small-color);
+    }
+
+    .node-success {
+        box-shadow: 0px 0px 4px 2px rgb(16, 214, 16);
+    }
+
+    .node-error {
+        box-shadow: 0px 0px 4px 2px rgb(214, 16, 16);
+    }
+
+    .node-header {
+        padding: 8px 12px;
+        border-bottom: 2px solid var(--border-color);
+        text-align: start;
+        font-weight: bold;
+    }
+
+    .node-body {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+    }
+
+    .node-input,
+    .node-output {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        height: 12px;
+        gap: 10px;
+    }
+
+    .node-output {
+        flex-direction: row-reverse;
+    }
+
+    .node-input #color,
+    .node-output #color {
+        width: 6px;
+        height: 6px;
+        border: 3px solid var(--text-color);
+        border-radius: 6px;
+    }
+
+    .node-input #color:hover,
+    .node-output #color:hover {
+        border: 3px solid var(--text-color-hover);
+    }
+
+    .node-input #name,
+    .node-output #name {
+        color: var(--text-color);
+        font-size: 14px;
+    }
+
+    .node-box {
+        padding: 5px 0px;
+    }
+
+    .node-link {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100vw;
+        height: 100vh;
+    }
+
+    .node-link-path {
+        fill: none;
+        stroke: var(--border-color);
+        stroke-width: 3px;
+    }
+</style>

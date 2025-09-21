@@ -24,9 +24,9 @@ def handle(request: web.Request):
     if command == "get":
         text = str(get(request.query.get("key")))
     elif command == "set":
-        set(request.query.get("key"), request.query.get("data"))
+        set(request.query.get("key"), request.query.get("value"))
     elif command == "add":
-        add(request.query.get("key"), request.query.get("data"))
+        add(request.query.get("key"), request.query.get("value"))
     elif command == "remove":
         remove(request.query.get("key"))
     elif command == "existe":
@@ -61,12 +61,12 @@ def get(key: str):
     return _setting.get(key)
 
 
-def set(key: str, data: any):
+def set(key: str, value: any):
     """Set setting value"""
 
     global _setting
 
-    _setting[key] = data
+    _setting[key] = value
 
 
 def add(key: str, data: any):

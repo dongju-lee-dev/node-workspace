@@ -2,6 +2,7 @@ import struct
 import time
 from aiohttp import web
 import yaml
+import json
 from scripts import file
 from scripts import package
 from scripts import setting
@@ -18,6 +19,11 @@ class NodePortAddress:
     def __init__(self):
         self.id = None
         self.port = None
+
+    def __eq__(self, other):
+        if isinstance(other, NodePortAddress):
+            return self.id == other.id and self.port == other.port
+        return False
 
 
 @dataclass
@@ -106,6 +112,7 @@ def workspace_new(name: str):
 
     file.create_directory(path)
     file.create_file(f"{path}/space.nww")
+    file.write_file(f"{path}/space.nww", yaml.dump(node, sort_keys=False))
 
     return ""
 
@@ -124,10 +131,12 @@ def workspace_delete(name: str):
 def workspace_load(name: str):
     try:
         global node
+        global memory
 
         node = yaml.safe_load(file.read_file(f"{WORKSPACE_PATH}/{name}/space.nww"))
+        memory.clear()
 
-        return ""
+        return json.dumps(node)
 
     except Exception as e:
         return str(e)
@@ -220,15 +229,15 @@ def editor_create(node_group, node_name, position_x, position_y):
         id = 0
 
         for i in node.keys():
-            id += 1
-
             if id != i:
                 break
 
+            id += 1
+
         n_b = package.get_node(node_group, node_name)
-        i_b = [NodePortAddress() for _ in range(n_b.meta["input"].length)]
-        o_b = [NodePortAddress() for _ in range(n_b.meta["output"].length)]
-        o_b_b = [None for _ in range(n_b.meta["output"].length)]
+        i_b = [NodePortAddress() for _ in range(len(n_b.meta["input"]))]
+        o_b = [[] for _ in range(len(n_b.meta["output"]))]
+        o_b_b = [None for _ in range(len(n_b.meta["output"]))]
 
         node[id] = Node(
             n_b,
@@ -240,35 +249,34 @@ def editor_create(node_group, node_name, position_x, position_y):
             "",
         )
 
-        return f"status=success?id={id}"
+        return f"status=success&id={id}"
 
     except Exception as e:
-        return f"status=error?message={str(e)}"
+        return f"status=error&message={str(e)}"
 
 
 def editor_delete(id):
     global node
 
-    try:
-        id = str(id)
+    id = int(id)
 
-        for ipa in node[id].input:
-            for opa in node[ipa.id].output[ipa.port]:
-                if opa.id == ipa.id:
-                    node[ipa.id].output[ipa.port].remove(opa)
-                    break
+    for ipa in node[id].input:
+        if ipa.id == None:
+            break
 
-        for opal in node[id].output:
-            for opa in opal:
-                node[opa.id].input[opa.port].id = None
-                node[opa.id].input[opa.port].port = None
+        for opa in node[ipa.id].output[ipa.port]:
+            if opa.id == ipa.id:
+                node[ipa.id].output[ipa.port].remove(opa)
+                break
 
-        del node[id]
+    for opal in node[id].output:
+        for opa in opal:
+            node[opa.id].input[opa.port].id = None
+            node[opa.id].input[opa.port].port = None
 
-        return "status=success"
+    del node[id]
 
-    except Exception as e:
-        return f"status=error?message={str(e)}"
+    return "status=success"
 
 
 def editor_movement(id, position_x, position_y):
@@ -281,7 +289,7 @@ def editor_movement(id, position_x, position_y):
         return "status=success"
 
     except Exception as e:
-        return f"status=error?message={str(e)}"
+        return f"status=error&message={str(e)}"
 
 
 def editor_content(id, content):
@@ -295,7 +303,7 @@ def editor_content(id, content):
         return "status=success"
 
     except Exception as e:
-        return f"status=error?message={str(e)}"
+        return f"status=error&message={str(e)}"
 
 
 def editor_link(id_o, port_o, id_i, port_i):
@@ -319,10 +327,10 @@ def editor_link(id_o, port_o, id_i, port_i):
         return "status=success"
 
     except Exception as e:
-        return f"status=error?message={str(e)}"
+        return f"status=error&message={str(e)}"
 
 
-def editor_unlink(id_i, port_i, id_o, port_o):
+def editor_unlink(id_o, port_o, id_i, port_i):
     global node
 
     try:
@@ -343,7 +351,7 @@ def editor_unlink(id_i, port_i, id_o, port_o):
         return "status=success"
 
     except Exception as e:
-        return f"status=error?message={str(e)}"
+        return f"status=error&message={str(e)}"
 
 
 async def runtime_handle(request: web.Request):
@@ -359,14 +367,13 @@ async def runtime_handle(request: web.Request):
         node_network = runtime_node_network(request.query.get("select_id"))
         node_layer = runtime_node_layer(node_network)
 
-        ncr = runtime_content_read(node_network, ws)
-        ncw = dict.fromkeys(ncr, bytearray)
+        ncw = dict.fromkeys(node_network, bytearray)
 
         node_start = time.time()
 
         for nd in node_layer:
             for k in nd:
-                await runtime_node_play(nd[k], k, node_layer, ws, ncr[k], ncw[k])
+                await runtime_node_play(nd[k], k, node_layer, ws, ncw[k])
 
         node_end = time.time()
 
@@ -374,8 +381,7 @@ async def runtime_handle(request: web.Request):
 
         full_end = time.time()
 
-        print(f"full time : {full_end - full_start}")
-        print(f"node time : {node_end - node_start}")
+        print(f"full time: {full_end - full_start}, node time: {node_end - node_start}")
 
         await ws.close()
 
@@ -460,34 +466,9 @@ def runtime_node_layer_down(
             runtime_node_layer_down(nn, nl, pa, i)
 
 
-async def runtime_content_read(nn: dict[int, Node], ws: web.WebSocketResponse):
-    id_list = ",".join(str(k) for k in nn.keys())
+async def runtime_content_write(nc: dict[int, bytearray], ws: web.WebSocketResponse):
+    global node
 
-    await ws.send_bytes(f"command=content_read?id_list={id_list}".encode("utf-8"))
-
-    data = await ws.receive_bytes()
-    result = {}
-    offset = 0
-
-    while offset < len(data):
-        key = struct.unpack(">I", data[offset : offset + 4])[0]
-        offset += 4
-
-        value_length = struct.unpack(">I", data[offset : offset + 4])[0]
-        offset += 4
-
-        value = data[offset : offset + value_length]
-        offset += value_length
-
-        if offset < len(data) and data[offset : offset + 1] == b",":
-            offset += 1
-
-        result[key] = value
-
-    return result
-
-
-async def runtime_content_write(nc: dict[int, bytes], ws: web.WebSocketResponse):
     buffer = bytearray()
 
     for k in nc:
@@ -495,6 +476,7 @@ async def runtime_content_write(nc: dict[int, bytes], ws: web.WebSocketResponse)
             buffer.extend(b",")
 
         buffer.extend(struct.pack(">I", k) + struct.pack(">I", len(nc[k])) + nc[k])
+        node[k].content = bytes(nc[k])
 
     await ws.send_bytes(buffer)
 
@@ -504,7 +486,6 @@ async def runtime_node_play(
     id: int,
     nn: dict[int, Node],
     ws: web.WebSocketResponse,
-    ncr: bytes,
     ncw: bytearray,
 ):
     global memory
@@ -518,16 +499,16 @@ async def runtime_node_play(
         if "system_access" in node.data.meta:
             keys = {}
             keys["_memory"] = memory
-            keys["_content_read"] = ncr
+            keys["_content_read"] = node.content
             keys["_content_write"] = ncw
 
             await node.data.function(*age, **keys)
         else:
             await node.data.function(*age)
 
-        ws.send_str(f"status=success?id={id}")
+        ws.send_str(f"status=success&id={id}")
         return True
 
     except Exception as e:
-        ws.send_str(f"status=error?id={id}error={str(e)}")
+        ws.send_str(f"status=error&id={id}error={str(e)}")
         return False

@@ -6,6 +6,13 @@
     --text-color-hover: rgb(255, 255, 255);
     --point-color: rgb(0, 192, 0);
     --point-small-color: rgb(0, 128, 0);
+
+    --color-any: rgb(33, 182, 78);
+    --color-int: rgb(32, 118, 230);
+    --color-float: rgb(104, 169, 255);
+    --color-bool: rgb(120, 64, 224);
+    --color-str: rgb(216, 224, 93);
+    --color-bytes: rgb(0, 0, 0);
 }
 
 h1,

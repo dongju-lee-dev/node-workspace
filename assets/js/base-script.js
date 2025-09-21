@@ -20,16 +20,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         "rightBottom": document.querySelector('#bottom-bar-right-point'),
     }
 
+    const workSpace = document.querySelector('work-space');
+
+    workSpace.dataBase = dataBase;
+
     const sidePanel = document.querySelectorAll('side-panel');
 
     sidePanel[0].setOtherSidepanel(sidePanel[1]);
     sidePanel[1].setOtherSidepanel(sidePanel[0]);
 
-    let toolLoadEnd = [];
-
     //변수
     dataBase.set('layout', layout);
-    dataBase.set('workSpace', document.querySelector('work-space'));
+    dataBase.set('workSpace', workSpace);
     dataBase.set('workSpaceTop', document.querySelector('#work-space-top'));
     dataBase.set('workSpaceBottom', document.querySelector('#work-space-bottom'));
     dataBase.set('window-field', document.querySelector('#window-field'));
@@ -39,22 +41,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     //함수
     dataBase.set('SetSidePanelEvent', SetSidePanelEvent);
 
-    let nodeBuff = (await (await nodeResponse).text()).split('#');
-    let node = {};
+    let nodeKeyBuff = (await (await nodeResponse).text()).split('#');
+    let nodeKey = {};
+    let nodeValue = {};
 
-    if (nodeBuff[0] !== '') {
-        for (let i = 0; i < nodeBuff.length; ++i) {
-            if (nodeBuff[i] === '0') continue;
+    if (nodeKeyBuff[0] !== '') {
+        for (let i = 0; i < nodeKeyBuff.length; ++i) {
+            if (nodeKeyBuff[i] === '0') continue;
 
-            let buff = nodeBuff[i].split('.');
+            let buff = nodeKeyBuff[i].split('.');
 
-            node[buff[0]] = buff[1].split(',');
+            nodeKey[buff[0]] = buff[1].split(',');
         }
+
+        await Promise.all(Object.entries(nodeKey).map(async ([node_group, node_names]) => {
+            const nodeGroup = {}
+
+            await Promise.all(node_names.map(async name => {
+                const response = await fetch(`/packages/node?command=get&node_group=${node_group}&node_name=${name}`);
+                const json = await response.json();
+
+                nodeGroup[name] = json;
+            }));
+
+            nodeValue[node_group] = nodeGroup;
+        }));
     }
 
-    dataBase.set('node', node);
+    dataBase.set('nodeKey', nodeKey);
+    dataBase.set('nodeValue', nodeValue);
 
     let tool = (await (await toolResponse).text()).split(',');
+    let toolLoadEnd = [];
 
     if (tool[0] !== '') {
         dataBase.set('toolLoadEnd', toolLoadEnd);

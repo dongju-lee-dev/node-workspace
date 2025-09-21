@@ -1,4 +1,5 @@
 import configparser
+import json
 import subprocess
 import sys
 import git
@@ -157,7 +158,10 @@ def node_handle(request: web.Request):
 
     if command == "list":
         result = node_list()
-
+    elif command == "get":
+        result = node_get(
+            request.query.get("node_group"), request.query.get("node_name")
+        )
     else:
         result = f"error : {command} is not a valid command."
 
@@ -188,12 +192,16 @@ def node_list():
     return text
 
 
-def get_node(node_group_name: str, node_name: str):
+def node_get(node_group: str, node_name: str):
+    return json.dumps(get_node(node_group, node_name).meta)
+
+
+def get_node(node_group: str, node_name: str):
     """Return NodeData"""
 
     global node
 
-    buff = node.get(node_group_name)
+    buff = node.get(node_group)
     if buff != None:
         return buff[node_name]
 

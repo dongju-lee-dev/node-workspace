@@ -9,8 +9,15 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# work-space : 노드 조작 개발하기 : 이동, 연결
-# work-space : 변경 사항을 이벤트로 콜백
+# 지금 임시로 만드는 것을 저장하는 기능이 필요함
+# bulit_in_tool - workspace
+# - 현재 연 워크스페이스 이름을 저장하고 나중에 저장 버튼을 누르면 이름으로 저장하기
+# - 이름이 없으면 새로 만들어서 추가
+
+# 저장 버튼 추가
+# 저장 테스트
+# 실행 테스트
+# 끝나면 built_in_tool 다 완성하기
 
 # bulit_in_tool
 # - package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가
@@ -19,9 +26,11 @@ from scripts import workspace
 # - console view : 안 만듬
 
 # 출시 전 단계
+# package로 추가된 것과 기본적인 모두에 attachShadow를 추가할 것
 # venv 에서 uv 전환 필요
 # setup.py를 만들어서 미리 설치해야하는 것을 설치하자
 # windows-setup.bat에서 호출함
+# 모든 통신을 REST API 형식으로 변경
 # 모든 기본 통신을 json 형식으로 변경
 # 문서 작성 : package, node, tool, workspace
 
@@ -45,6 +54,8 @@ from scripts import workspace
 # === v1.x ===
 
 # 대규모 공사
+# js -> ts
+# 웹 빌드 도구 사용
 # 다중 사용자 기능
 # 격리된 Tool 기능
 # 프론트 엔드로 대부분의 기능 이동

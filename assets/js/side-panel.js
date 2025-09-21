@@ -272,6 +272,6 @@ export class Sidepanel extends HTMLElement {
     }
 
     SaveState() {
-        fetch(`/setting?command=set&key=side-panel-state-${this.getAttribute('point') === 'left' ? 'left' : 'right'}&data=${this.key},${this.size},${this.unfold.style.display === 'none' ? 'on' : 'off'}`);
+        fetch(`/setting?command=set&key=side-panel-state-${this.getAttribute('point') === 'left' ? 'left' : 'right'}&value=${this.key},${this.size},${this.unfold.style.display === 'none' ? 'on' : 'off'}`);
     }
 }

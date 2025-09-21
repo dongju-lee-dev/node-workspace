@@ -30,8 +30,8 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_workspace', 'Workspace', 
     fetch('/workspace?command=list')
         .then(response => response.text())
         .then(data => {
-            const list = doc.querySelector('#list')
-            const button = doc.querySelector('#add-btn');
+            const list = doc.querySelector('#workspace-list')
+            const button = doc.querySelector('#workspace-add-btn');
 
             button.addEventListener('click', () => {
                 list.appendChild(createItem(`workspace ${list.children.length}`));
@@ -57,10 +57,10 @@ function createItem(name) {
     const img1 = document.createElement('img');
     const img2 = document.createElement('img');
 
-    li.classList.add('item');
-    span.classList.add('icon-layout');
-    img1.classList.add('icon');
-    img2.classList.add('icon');
+    li.classList.add('workspace-item');
+    span.classList.add('workspace-icon-layout');
+    img1.classList.add('workspace-icon');
+    img2.classList.add('workspace-icon');
     img1.src = '/packages/assets/built_in_tool/assets/image/workspace_rename_icon.png';
     img2.src = '/packages/assets/built_in_tool/assets/image/workspace_delete_icon.png';
 
@@ -69,8 +69,13 @@ function createItem(name) {
     nameNode.style.marginRight = '10px';
 
     li.addEventListener('click', (e) => {
-        // workspace open
-        // text.textContent
+        text.textContent = name
+
+        fetch(`/workspace?command=load&name=${name}`)
+            .then(response => response.json())
+            .then(json => {
+                workSpace.Load(json);
+            });
     });
 
     img1.addEventListener('click', (e) => {
@@ -135,13 +140,14 @@ wcb.addEventListener('click', (e) => {
     // workspace run
 });
 
-// == new node == 
+// == workspace node == 
 
 const response_wnn = await fetch('/packages/assets/built_in_tool/assets/html/workspace-new-node.html');
 const html_wnn = await response_wnn.text();
 
 const windowsField = dataBase.get('window-field');
-const node = dataBase.get('node');
+const workSpace = dataBase.get('workSpace');
+const node = dataBase.get('nodeKey');
 
 windowsField.insertAdjacentHTML('beforeend', html_wnn);
 
@@ -149,8 +155,7 @@ const wnn = windowsField.lastElementChild;
 let list = [];
 let len = Object.keys(node).length;
 let wnnSelect = false;
-
-console.log(node);
+let wnnGroup = "";
 
 for (const key in node) {
     if (len < node[key].length)
@@ -160,15 +165,20 @@ for (const key in node) {
 for (let i = 0; i < len; ++i) {
     const element = document.createElement('div');
 
-    element.classList.add('node');
+    element.classList.add('workspace-node');
     element.addEventListener('click', (e) => {
         if (wnnSelect) {
-            console.log("click");
+            workSpace.createNode(
+                wnnGroup, 
+                element.textContent, 
+                (e.clientX - workSpace.spacePositionX) / workSpace.spaceScale, 
+                (e.clientY - workSpace.spacePositionY) / workSpace.spaceScale);
+            wnn.style.display = 'none';
 
-            //new node
         } else {
-            wnnInit(node[element.textContent]);
             wnnSelect = true;
+            wnnGroup = element.textContent;
+            wnnInit(node[element.textContent]);
         }
     });
 
@@ -176,22 +186,30 @@ for (let i = 0; i < len; ++i) {
     list.push(element);
 }
 
-dataBase.get('workSpace').setCommand([['new node', (e) => {
-    let posX = e.clientX;
-    let posY = e.clientY;
+workSpace.setCommand([
+    ['new node', (e) => {
+        let posX = e.clientX;
+        let posY = e.clientY;
 
-    if (posX + wnn.offsetWidth > window.innerWidth)
-        posX -= wnn.offsetWidth;
-    if (posY + wnn.offsetHeight > window.innerHeight)
-        posY -= wnn.offsetHeight;
+        if (posX + wnn.offsetWidth > window.innerWidth)
+            posX -= wnn.offsetWidth;
+        if (posY + wnn.offsetHeight > window.innerHeight)
+            posY -= wnn.offsetHeight;
 
-    wnn.style.display = 'flex';
-    wnn.style.top = `${posY}px`;
-    wnn.style.left = `${posX}px`;
-    wnnSelect = false;
+        wnn.style.display = 'flex';
+        wnn.style.top = `${posY}px`;
+        wnn.style.left = `${posX}px`;
+        wnnSelect = false;
+        wnnGroup = "";
 
-    wnnInit(Object.keys(node));
-}]]);
+        wnnInit(Object.keys(node));
+    }],
+    ['delete node', (e) => {
+        if (workSpace.nodeSelect !== null) {
+            workSpace.deleteNode(workSpace.nodeSelect.id);
+        }
+    }]
+]);
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
