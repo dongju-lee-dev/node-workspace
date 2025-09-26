@@ -1,5 +1,7 @@
 <div id="space">
-    <div id="space-nodelink"></div>
+    <svg id="space-nodelink-svg">
+        <g id="space-nodelink"></g>
+    </svg>
     <div id="space-node"></div>
 </div>
 <div id="command"></div>
@@ -15,6 +17,20 @@
 
     #space {
         transform-origin: left top;
+    }
+
+    #space-nodelink-svg {
+        position: absolute;
+        transform: translateX(calc(100000vw / -2)) translateY(calc(100000vh / -2));
+        width: 100000vw;
+        height: 100000vh;
+    }
+
+    #space-nodelink {
+        transform: translateX(calc(100000vw / 2)) translateY(calc(100000vh / 2));
+        fill: none;
+        stroke: var(--border-color);
+        stroke-width: 3px;
     }
 
     #command {

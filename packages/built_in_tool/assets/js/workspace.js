@@ -1,3 +1,5 @@
+const workSpace = dataBase.get('workSpace');
+
 //시작과 동시에 fetch로 workspace lastOpen을 통해서 연다.
 
 // == text == 
@@ -34,7 +36,11 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_workspace', 'Workspace', 
             const button = doc.querySelector('#workspace-add-btn');
 
             button.addEventListener('click', () => {
-                list.appendChild(createItem(`workspace ${list.children.length}`));
+                const name = `${Math.random() * 10000000000000000}`;
+
+                fetch(`/workspace?command=new&name=${name}`);
+
+                list.appendChild(createItem(name));
                 list.appendChild(button);
             });
 
@@ -50,8 +56,6 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_workspace', 'Workspace', 
 let currentInput = null;
 
 function createItem(name) {
-    fetch(`/workspace?command=new&name=${name}`);
-
     const li = document.createElement('li');
     const span = document.createElement('span');
     const img1 = document.createElement('img');
@@ -68,14 +72,15 @@ function createItem(name) {
     nameNode.textContent = name;
     nameNode.style.marginRight = '10px';
 
-    li.addEventListener('click', (e) => {
-        text.textContent = name
+    li.addEventListener('click', async e => {
+        text.textContent = name;
 
-        fetch(`/workspace?command=load&name=${name}`)
-            .then(response => response.json())
-            .then(json => {
-                workSpace.Load(json);
-            });
+            const response = await fetch(`/workspace?command=load&name=${name}`);
+            const json = await response.json();
+
+            workSpace.unload();
+            workSpace.load(name, json);
+        
     });
 
     img1.addEventListener('click', (e) => {
@@ -125,6 +130,39 @@ function createItem(name) {
     return li;
 }
 
+// == save workspace ==
+
+const save = document.createElement('div');
+
+save.classList.add('icon');
+save.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_file_save_icon.png)'
+save.style.backgroundSize = 'cover';
+
+save.addEventListener('mousedown', async e => {
+    if (workSpace.name === null) {
+        workSpace.name = prompt('Please define the name of the workspace file to be saved.');
+
+        const response = await fetch(`/workspace?command=new&name=${workSpace.name}`);
+        const text = await response.text();
+
+        if (text !== '') {
+            alert(`save error: ${text}`);
+
+            return;
+        }
+    }
+
+    const response = await fetch(`/workspace?command=save&name=${workSpace.name}`);
+    const text = await response.text();
+
+    if (text === '')
+        alert('save success');
+    else
+        alert(`save error: ${text}`);
+});
+
+dataBase.get('layout')['leftTop'].appendChild(save);
+
 // == control bar ==
 
 const response_wcb = await fetch('/packages/assets/built_in_tool/assets/html/workspace-control-bar.html');
@@ -136,7 +174,7 @@ workSpaceTop.insertAdjacentHTML('beforeend', html_wcb);
 
 const wcb = workSpaceTop.lastElementChild;
 
-wcb.addEventListener('click', (e) => {
+wcb.addEventListener('mousedown', e => {
     // workspace run
 });
 
@@ -146,7 +184,6 @@ const response_wnn = await fetch('/packages/assets/built_in_tool/assets/html/wor
 const html_wnn = await response_wnn.text();
 
 const windowsField = dataBase.get('window-field');
-const workSpace = dataBase.get('workSpace');
 const node = dataBase.get('nodeKey');
 
 windowsField.insertAdjacentHTML('beforeend', html_wnn);
@@ -166,12 +203,17 @@ for (let i = 0; i < len; ++i) {
     const element = document.createElement('div');
 
     element.classList.add('workspace-node');
-    element.addEventListener('click', (e) => {
+    element.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
         if (wnnSelect) {
             workSpace.createNode(
-                wnnGroup, 
-                element.textContent, 
-                (e.clientX - workSpace.spacePositionX) / workSpace.spaceScale, 
+                wnnGroup,
+                element.textContent,
+                (e.clientX - workSpace.spacePositionX) / workSpace.spaceScale,
                 (e.clientY - workSpace.spacePositionY) / workSpace.spaceScale);
             wnn.style.display = 'none';
 
@@ -211,11 +253,8 @@ workSpace.setCommand([
     }]
 ]);
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        wnn.style.display = 'none';
-    }
-});
+document.addEventListener('keydown', e => wnn.style.display = 'none');
+document.addEventListener('mousedown', e => wnn.style.display = 'none');
 
 function wnnInit(textList) {
     let i = 0;

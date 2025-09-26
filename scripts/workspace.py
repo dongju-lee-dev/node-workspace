@@ -16,14 +16,33 @@ class NodePortAddress:
     id: int
     port: int
 
-    def __init__(self):
-        self.id = None
-        self.port = None
+    def __init__(self, id, port):
+        self.id = id
+        self.port = port
 
     def __eq__(self, other):
         if isinstance(other, NodePortAddress):
             return self.id == other.id and self.port == other.port
         return False
+
+
+class NodeSave:
+    group: str
+    name: str
+    input: list[NodePortAddress]
+    output: list[list[NodePortAddress]]
+    position_x: float
+    position_y: float
+    content: str
+
+    def __init__(self, group, name, input, output, position_x, position_y, content):
+        self.group = group
+        self.name = name
+        self.input = input
+        self.output = output
+        self.position_x = position_x
+        self.position_y = position_y
+        self.content = content
 
 
 @dataclass
@@ -39,6 +58,7 @@ class Node:
 
 node: dict[int, Node] = {}
 memory: dict[str, any] = {}
+path: str = None
 
 
 def init():
@@ -50,6 +70,32 @@ def init():
 
     if not setting.existe("lastOpenWorkspaceName"):
         setting.set("lastOpenWorkspaceName", "")
+
+    yaml.SafeLoader.add_constructor(
+        "tag:yaml.org,2002:python/object:scripts.workspace.NodeSave",
+        lambda loader, data: NodeSave(**loader.construct_mapping(data)),
+    )
+
+    yaml.SafeLoader.add_constructor(
+        "tag:yaml.org,2002:python/object:scripts.workspace.NodePortAddress",
+        lambda loader, data: NodePortAddress(**loader.construct_mapping(data)),
+    )
+
+    yaml.SafeDumper.add_representer(
+        NodeSave,
+        lambda dumper, data: dumper.represent_mapping(
+            "tag:yaml.org,2002:python/object:scripts.workspace.NodeSave",
+            data.__dict__.copy(),
+        ),
+    )
+
+    yaml.SafeDumper.add_representer(
+        NodePortAddress,
+        lambda dumper, data: dumper.represent_mapping(
+            "tag:yaml.org,2002:python/object:scripts.workspace.NodePortAddress",
+            data.__dict__.copy(),
+        ),
+    )
 
     return [
         web.get("/workspace", workspace_handle),
@@ -112,7 +158,7 @@ def workspace_new(name: str):
 
     file.create_directory(path)
     file.create_file(f"{path}/space.nww")
-    file.write_file(f"{path}/space.nww", yaml.dump(node, sort_keys=False))
+    file.write_file(f"{path}/space.nww", yaml.dump({}, sort_keys=False))
 
     return ""
 
@@ -132,11 +178,27 @@ def workspace_load(name: str):
     try:
         global node
         global memory
+        global path
 
-        node = yaml.safe_load(file.read_file(f"{WORKSPACE_PATH}/{name}/space.nww"))
+        buff = yaml.safe_load(file.read_file(f"{WORKSPACE_PATH}/{name}/space.nww"))
+        node = {}
+
+        for key, value in buff.items():
+            n = Node(
+                package.get_node(value.group, value.name),
+                value.input,
+                value.output,
+                [],
+                value.position_x,
+                value.position_y,
+                value.content,
+            )
+            node[key] = n
+
         memory.clear()
+        path = f"{WORKSPACE_PATH}/{name}/space.nww"
 
-        return json.dumps(node)
+        return json.dumps(buff, default=lambda obj: obj.__dict__, indent=4)
 
     except Exception as e:
         return str(e)
@@ -146,9 +208,11 @@ def workspace_unload():
     try:
         global node
         global memory
+        global path
 
         node.clear()
         memory.clear()
+        path = None
 
         return ""
 
@@ -160,8 +224,22 @@ def workspace_save(name: str):
     try:
         global node
 
+        buff: dict[int, NodeSave] = {}
+
+        for key, value in node.items():
+            ns = NodeSave(
+                value.data.meta["node_group"],
+                value.data.meta["node_name"],
+                value.input,
+                value.output,
+                value.position_x,
+                value.position_y,
+                value.content,
+            )
+            buff[key] = ns
+
         file.write_file(
-            f"{WORKSPACE_PATH}/{name}/space.nww", yaml.dump(node, sort_keys=False)
+            f"{WORKSPACE_PATH}/{name}/space.nww", yaml.safe_dump(buff, sort_keys=False)
         )
 
         return ""
@@ -235,7 +313,7 @@ def editor_create(node_group, node_name, position_x, position_y):
             id += 1
 
         n_b = package.get_node(node_group, node_name)
-        i_b = [NodePortAddress() for _ in range(len(n_b.meta["input"]))]
+        i_b = [NodePortAddress(None, None) for _ in range(len(n_b.meta["input"]))]
         o_b = [[] for _ in range(len(n_b.meta["output"]))]
         o_b_b = [None for _ in range(len(n_b.meta["output"]))]
 
@@ -315,11 +393,7 @@ def editor_link(id_o, port_o, id_i, port_i):
         id_i = int(id_i)
         port_i = int(port_i)
 
-        pa = NodePortAddress()
-        pa.id = id_i
-        pa.port = port_i
-
-        node[id_o].output[port_o].append(pa)
+        node[id_o].output[port_o].append(NodePortAddress(id_i, port_i))
 
         node[id_i].input[port_i].id = id_o
         node[id_i].input[port_i].port = port_o
@@ -339,11 +413,7 @@ def editor_unlink(id_o, port_o, id_i, port_i):
         id_i = int(id_i)
         port_i = int(port_i)
 
-        pa = NodePortAddress()
-        pa.id = id_i
-        pa.port = port_i
-
-        node[id_o].output[port_o].remove(pa)
+        node[id_o].output[port_o].remove(NodePortAddress(id_i, port_i))
 
         node[id_i].input[port_i].id = None
         node[id_i].input[port_i].port = None
