@@ -9,9 +9,6 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# 노드 built_in_node의 content 부분의 미완성 부분을 완성
-# 노드 실행 테스트
-
 # bulit_in_tool
 # 1.setting : setting 기능을 사용할 수 있게 하기 생성, 삭제, 수정
 # 2.console view : 안 만듬

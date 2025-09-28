@@ -73,17 +73,25 @@ function createItem(name) {
     nameNode.style.marginRight = '10px';
 
     li.addEventListener('click', async e => {
+        if (e.button !== 0) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
         text.textContent = name;
 
-            const response = await fetch(`/workspace?command=load&name=${name}`);
-            const json = await response.json();
+        const response = await fetch(`/workspace?command=load&name=${name}`);
+        const json = await response.json();
 
-            workSpace.unload();
-            workSpace.load(name, json);
-        
+        workSpace.unload();
+        workSpace.load(name, json);
+
     });
 
     img1.addEventListener('click', (e) => {
+        if (e.button !== 0) return;
+
+        e.preventDefault();
         e.stopPropagation();
 
         if (currentInput) currentInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
@@ -101,6 +109,7 @@ function createItem(name) {
             if (e.key === 'Enter') {
                 fetch(`/workspace?command=rename&old_name=${nameNode.textContent}&new_name=${input.value}`);
 
+                name = input.value;
                 nameNode.textContent = input.value;
                 li.replaceChild(nameNode, input);
                 currentInput = null;
@@ -113,6 +122,9 @@ function createItem(name) {
     });
 
     img2.addEventListener('click', (e) => {
+        if (e.button !== 0) return;
+
+        e.preventDefault();
         e.stopPropagation();
 
         if (confirm(`'${nameNode.textContent}' Are you sure you want to delete the workspace?`)) {
@@ -138,7 +150,12 @@ save.classList.add('icon');
 save.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_file_save_icon.png)'
 save.style.backgroundSize = 'cover';
 
-save.addEventListener('mousedown', async e => {
+save.addEventListener('click', async e => {
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
     if (workSpace.name === null) {
         workSpace.name = prompt('Please define the name of the workspace file to be saved.');
 
@@ -174,8 +191,14 @@ workSpaceTop.insertAdjacentHTML('beforeend', html_wcb);
 
 const wcb = workSpaceTop.lastElementChild;
 
-wcb.addEventListener('mousedown', e => {
-    // workspace run
+wcb.addEventListener('click', e => {
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (workSpace.nodeSelect !== null && workSpace.nodeSelect.classList.contains('node'))
+        workSpace.runNode(workSpace.nodeSelect.id, null, null, null, null);
 });
 
 // == workspace node == 
@@ -229,31 +252,40 @@ for (let i = 0; i < len; ++i) {
 }
 
 workSpace.setCommand([
-    ['new node', (e) => {
-        let posX = e.clientX;
-        let posY = e.clientY;
+    [
+        'new node', e => {
+            let posX = e.clientX;
+            let posY = e.clientY;
 
-        if (posX + wnn.offsetWidth > window.innerWidth)
-            posX -= wnn.offsetWidth;
-        if (posY + wnn.offsetHeight > window.innerHeight)
-            posY -= wnn.offsetHeight;
+            if (posX + wnn.offsetWidth > window.innerWidth)
+                posX -= wnn.offsetWidth;
+            if (posY + wnn.offsetHeight > window.innerHeight)
+                posY -= wnn.offsetHeight;
 
-        wnn.style.display = 'flex';
-        wnn.style.top = `${posY}px`;
-        wnn.style.left = `${posX}px`;
-        wnnSelect = false;
-        wnnGroup = "";
+            wnn.style.display = 'flex';
+            wnn.style.top = `${posY}px`;
+            wnn.style.left = `${posX}px`;
+            wnnSelect = false;
+            wnnGroup = "";
 
-        wnnInit(Object.keys(node));
-    }],
-    ['delete node', (e) => {
-        if (workSpace.nodeSelect !== null) {
-            workSpace.deleteNode(workSpace.nodeSelect.id);
+            wnnInit(Object.keys(node));
+        }],
+    [
+        'delete node', e => {
+            console.log(workSpace.nodeSelect)
+            if (workSpace.nodeSelect !== null && workSpace.nodeSelect.classList.contains('node'))
+                workSpace.deleteNode(workSpace.nodeSelect.id);
         }
-    }]
+    ],
+    [
+        'delete node link', e => {
+            if (workSpace.nodeSelect !== null && workSpace.nodeSelect.classList.contains('node-link'))
+                workSpace.unlinkNode(workSpace.nodeSelect);
+        }
+    ]
 ]);
 
-document.addEventListener('keydown', e => wnn.style.display = 'none');
+document.addEventListener('keyup', e => wnn.style.display = 'none');
 document.addEventListener('mousedown', e => wnn.style.display = 'none');
 
 function wnnInit(textList) {

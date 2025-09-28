@@ -22,7 +22,9 @@ ADD_META = {
 
 
 def add(a, b):
-    return a + b
+    return [
+        a + b,
+    ]
 
 
 SUB_META = {
@@ -49,7 +51,9 @@ SUB_META = {
 
 
 def sub(a, b):
-    return a - b
+    return [
+        a - b,
+    ]
 
 
 MUL_META = {
@@ -76,7 +80,9 @@ MUL_META = {
 
 
 def mul(a, b):
-    return a * b
+    return [
+        a * b,
+    ]
 
 
 DIV_META = {
@@ -103,7 +109,9 @@ DIV_META = {
 
 
 def div(a, b):
-    return a / b
+    return [
+        a / b,
+    ]
 
 
 FDIV_META = {
@@ -130,7 +138,9 @@ FDIV_META = {
 
 
 def fdiv(a, b):
-    return a // b
+    return [
+        a // b,
+    ]
 
 
 MOD_META = {
@@ -157,7 +167,9 @@ MOD_META = {
 
 
 def mod(a, b):
-    return a % b
+    return [
+        a % b,
+    ]
 
 
 LOGICAL_AND_META = {
@@ -183,8 +195,10 @@ LOGICAL_AND_META = {
 }
 
 
-def logical_and(a: bool, b: bool) -> bool:
-    return a and b
+def logical_and(a: bool, b: bool):
+    return [
+        a and b,
+    ]
 
 
 LOGICAL_OR_META = {
@@ -210,8 +224,10 @@ LOGICAL_OR_META = {
 }
 
 
-def logical_or(a: bool, b: bool) -> bool:
-    return a or b
+def logical_or(a: bool, b: bool):
+    return [
+        a or b,
+    ]
 
 
 LOGICAL_NOT_META = {
@@ -233,8 +249,10 @@ LOGICAL_NOT_META = {
 }
 
 
-def logical_not(a: bool) -> bool:
-    return not a
+def logical_not(a: bool):
+    return [
+        not a,
+    ]
 
 
 IS_LESS_THAN_META = {
@@ -260,8 +278,10 @@ IS_LESS_THAN_META = {
 }
 
 
-def is_less_than(a, b) -> bool:
-    return a < b
+def is_less_than(a, b):
+    return [
+        a < b,
+    ]
 
 
 IS_LESS_THAN_OR_EQUAL_TO_META = {
@@ -287,8 +307,10 @@ IS_LESS_THAN_OR_EQUAL_TO_META = {
 }
 
 
-def is_less_than_or_equal_to(a, b) -> bool:
-    return a <= b
+def is_less_than_or_equal_to(a, b):
+    return [
+        a <= b,
+    ]
 
 
 IS_EQUAL_TO_META = {
@@ -314,8 +336,10 @@ IS_EQUAL_TO_META = {
 }
 
 
-def is_equal_to(a, b) -> bool:
-    return a == b
+def is_equal_to(a, b):
+    return [
+        a == b,
+    ]
 
 
 IS_NOT_EQUAL_TO_META = {
@@ -341,8 +365,10 @@ IS_NOT_EQUAL_TO_META = {
 }
 
 
-def is_not_equal_to(a, b) -> bool:
-    return a != b
+def is_not_equal_to(a, b):
+    return [
+        a != b,
+    ]
 
 
 IS_GREATER_THAN_META = {
@@ -368,8 +394,10 @@ IS_GREATER_THAN_META = {
 }
 
 
-def is_greater_than(a, b) -> bool:
-    return a > b
+def is_greater_than(a, b):
+    return [
+        a > b,
+    ]
 
 
 IS_GREATER_THAN_OR_EQUAL_TO_META = {
@@ -395,5 +423,7 @@ IS_GREATER_THAN_OR_EQUAL_TO_META = {
 }
 
 
-def is_greater_than_or_equal_to(a, b) -> bool:
-    return a >= b
+def is_greater_than_or_equal_to(a, b):
+    return [
+        a >= b,
+    ]

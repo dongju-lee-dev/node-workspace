@@ -1,5 +1,21 @@
 <div id="space">
     <svg id="space-nodelink-svg">
+        <defs>
+            <filter id="space-nodelink-select" filterUnits="objectBoundingBox" x="0" y="0" width="100%" height="100%">
+                <feMorphology operator="dilate" radius="1" in="SourceAlpha" result="expanded" />
+                <feFlood flood-color="var(--point-small-color)" flood-opacity="1" result="color" />
+                <feComposite in="color" in2="expanded" operator="in" result="shadow-mask" />
+
+                <feGaussianBlur in="shadow-mask" stdDeviation="2" result="blurred-shadow" />
+
+                <feOffset in="blurred-shadow" dx="0" dy="0" result="offset-shadow" />
+
+                <feMerge>
+                    <feMergeNode in="offset-shadow" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
         <g id="space-nodelink"></g>
     </svg>
     <div id="space-node"></div>

@@ -121,13 +121,13 @@ export class Workspace extends HTMLElement {
         this.command.style.left = `${posX}px`;
         this.command.style.top = `${posY}px`;
 
-        const mousedown = e => {
+        const click = e => {
             this.command.style.display = 'none';
 
-            document.removeEventListener('mousedown', mousedown);
+            document.removeEventListener('click', click);
         };
 
-        document.addEventListener('mousedown', mousedown);
+        document.addEventListener('click', click);
     }
 
     setCommand(command, order) {
@@ -149,7 +149,7 @@ export class Workspace extends HTMLElement {
 
             menu.classList.add('command-menu');
             menu.textContent = command[i][0];
-            menu.addEventListener('mousedown', (e) => {
+            menu.addEventListener('click', (e) => {
                 if (e.button !== 0) return;
 
                 e.preventDefault();
@@ -245,7 +245,10 @@ export class Workspace extends HTMLElement {
             document.removeEventListener('mouseup', mouseup);
         };
 
+        element.classList.add('node-select');
+
         this.selectNodeOrNodeLink(element, () => {
+            element.classList.remove('node-select');
             document.removeEventListener('mousemove', mousemove);
             document.removeEventListener('mouseup', mouseup);
         });
@@ -373,19 +376,22 @@ export class Workspace extends HTMLElement {
     }
 
     nodeLinkHeader = (element, e) => {
-        this.selectNodeOrNodeLink(element, () => { });
+        if (e.button !== 0) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        element.style.filter = 'url(#space-nodelink-select)'
+
+        this.selectNodeOrNodeLink(element, () => element.style.filter = '');
     }
 
     selectNodeOrNodeLink(select, selectEnd) {
-        if (this.nodeSelect) {
-            this.nodeSelect.classList.remove('node-select');
-
-            if (this.nodeSelectEnd) this.nodeSelectEnd();
-        }
+        if (this.nodeSelectEnd && this.nodeSelect)
+            this.nodeSelectEnd();
 
         this.nodeSelectEnd = selectEnd;
         this.nodeSelect = select;
-        this.nodeSelect.classList.add('node-select');
     }
 
     unload() {
@@ -446,7 +452,7 @@ export class Workspace extends HTMLElement {
 
             content.innerHTML = nodeData.content;
             content.querySelectorAll('script').forEach(script => {
-                new Function('dataBase', 'node', script.textContent)(this.dataBase, element, space[key].content);
+                new Function('dataBase', 'node', 'content', script.textContent)(this.dataBase, element, space[key].content);
             });
 
             this.spaceNode.appendChild(element);
@@ -454,7 +460,7 @@ export class Workspace extends HTMLElement {
         }
 
         for (const nk in this.node) {
-            if (!'input' in space[nk]) continue;
+            if (!('input' in space[nk])) continue;
 
             const pa = space[nk].input;
             const p = this.node[nk].querySelectorAll('.node-input');
@@ -476,6 +482,7 @@ export class Workspace extends HTMLElement {
                 output.link.push(svg)
                 p[i].link = svg;
 
+                svg.addEventListener('mousedown', e => this.nodeLinkHeader(svg, e));
                 svg.outputId = pa[i].id;
                 svg.outputPort = pa[i].port;
                 svg.inputId = parseInt(nk, 10);
@@ -551,7 +558,7 @@ export class Workspace extends HTMLElement {
 
         content.innerHTML = nodeData.content;
         content.querySelectorAll('script').forEach(script => {
-            new Function('dataBase', 'node', script.textContent)(this.dataBase, element, null);
+            new Function('dataBase', 'node', 'content', script.textContent)(this.dataBase, element, null);
         });
 
         this.spaceNode.appendChild(element);
@@ -614,6 +621,7 @@ export class Workspace extends HTMLElement {
         outputPortElement.link.push(svg);
         inputPortElement.link = svg;
 
+        svg.addEventListener('mousedown', e => this.nodeLinkHeader(svg, e));
         svg.outputId = outputId;
         svg.outputPort = outputPort;
         svg.inputId = inputId;
@@ -644,5 +652,43 @@ export class Workspace extends HTMLElement {
         this.node[nodelink.inputId].children[1].children[0].children[nodelink.inputPort].link = null;
 
         nodelink.remove();
+    }
+
+    async runNode(selectNodeID, open = null, message = null, error = null, close = null) {
+        const socket = new WebSocket(`/workspace/runtime`);
+
+        socket.addEventListener('open', e => {
+            if (typeof open !== 'function') {
+                socket.send(`${selectNodeID}`);
+            }
+            else open(e);
+        });
+
+        socket.addEventListener('message', e => {
+            if (typeof message !== 'funciton') {
+                const param = new URLSearchParams(e.data);
+
+                if (param.get('status') === 'success') {
+                    const node = this.node[parseInt(param.get('id'), 10)];
+                    const content = param.get('content');
+
+                    node.classList.remove('node-error')
+                    node.querySelector('#content').querySelectorAll('script').forEach(script => {
+                        new Function('dataBase', 'node', 'content', script.textContent)(this.dataBase, node, content);
+                    });
+                }
+                else
+                    this.node[parseInt(param.get('id'), 10)].classList.add('node-error')
+            }
+            else message(e);
+        });
+
+        socket.addEventListener('error', e => {
+            if (typeof error !== 'function') { } else error(e);
+        });
+
+        socket.addEventListener('close', e => {
+            if (typeof close !== 'function') { } else close(e);
+        });
     }
 }

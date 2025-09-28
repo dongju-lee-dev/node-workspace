@@ -10,15 +10,15 @@ CONTENT_TO_INT_META = {
             "color": "var(--color-int)",
         },
     ],
-    "content": file.read_file(
-        "packages/built_in_node/assets/html/content-input.html"
-    ),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
     "system_access": True,
 }
 
 
-def content_to_int(_content_read):
-    return int(_content_read)
+def content_to_int(sys):
+    return [
+        int(sys.content),
+    ]
 
 
 CONTENT_TO_FLOAT_META = {
@@ -31,15 +31,15 @@ CONTENT_TO_FLOAT_META = {
             "color": "var(--color-float)",
         },
     ],
-    "content": file.read_file(
-        "packages/built_in_node/assets/html/content-input.html"
-    ),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
     "system_access": True,
 }
 
 
-def content_to_float(_content_read):
-    return float(_content_read)
+def content_to_float(sys):
+    return [
+        float(sys.content),
+    ]
 
 
 CONTENT_TO_STRING = {
@@ -52,15 +52,15 @@ CONTENT_TO_STRING = {
             "color": "var(--color-string)",
         },
     ],
-    "content": file.read_file(
-        "packages/built_in_node/assets/html/content-input.html"
-    ),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
     "system_access": True,
 }
 
 
-def content_to_string(_content_read):
-    return _content_read
+def content_to_string(sys):
+    return [
+        sys.content,
+    ]
 
 
 CONTENT_TO_BOOL = {
@@ -73,15 +73,15 @@ CONTENT_TO_BOOL = {
             "color": "var(--color-bool)",
         },
     ],
-    "content": file.read_file(
-        "packages/built_in_node/assets/html/content-input.html"
-    ),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
     "system_access": True,
 }
 
 
-def content_to_bool(_content_read):
-    return bool(_content_read)
+def content_to_bool(sys):
+    return [
+        bool(sys.content),
+    ]
 
 
 MEMORY_READ_META = {
@@ -94,15 +94,15 @@ MEMORY_READ_META = {
             "color": "var(--color-any)",
         },
     ],
-    "content": file.read_file(
-        "packages/built_in_node/assets/html/content-input.html"
-    ),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
     "system_access": True,
 }
 
 
-def memory_read(_memory, _content_read):
-    return _memory[_content_read]
+def memory_read(sys):
+    return [
+        sys.memory[sys.content],
+    ]
 
 
 MEMORY_WRITE_META = {
@@ -115,12 +115,11 @@ MEMORY_WRITE_META = {
         },
     ],
     "output": [],
-    "content": file.read_file(
-        "packages/built_in_node/assets/html/content-input.html"
-    ),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
     "system_access": True,
 }
 
 
-def memory_write(data, _memory, _content_read):
-    _memory[_content_read] = data
+def memory_write(sys, data):
+    sys.memory[sys.content] = data
+    return []

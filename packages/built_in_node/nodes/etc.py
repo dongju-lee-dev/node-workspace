@@ -15,5 +15,6 @@ PRINT_FUNCTION_META = {
 }
 
 
-def print_function(value, _content_write):
-    _content_write = str(value)
+def print_function(sys, value):
+    sys.content = str(value)
+    return []

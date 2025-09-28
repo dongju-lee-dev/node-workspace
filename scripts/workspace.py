@@ -1,4 +1,3 @@
-import struct
 import time
 from aiohttp import web
 import yaml
@@ -11,6 +10,15 @@ from dataclasses import dataclass
 
 WORKSPACE_PATH = "save/workspace"
 
+
+class WorkSpaceSys:
+    memory: dict[int, any]
+    content: str
+
+    def __init__(self, memory, content):
+        self.memory = memory
+        self.content = content
+        
 
 class NodePortAddress:
     id: int
@@ -45,7 +53,6 @@ class NodeSave:
         self.content = content
 
 
-@dataclass
 class Node:
     data: NodeData
     input: list[NodePortAddress]
@@ -54,6 +61,17 @@ class Node:
     position_x: float
     position_y: float
     content: str
+
+    def __init__(
+        self, data, input, output, output_buff, position_x, position_y, content
+    ):
+        self.data = data
+        self.input = input
+        self.output = output
+        self.output_buff = output_buff
+        self.position_x = position_x
+        self.position_y = position_y
+        self.content = content
 
 
 node: dict[int, Node] = {}
@@ -427,31 +445,23 @@ def editor_unlink(id_o, port_o, id_i, port_i):
 async def runtime_handle(request: web.Request):
     ws = web.WebSocketResponse()
 
-    global node
-
     try:
-        await ws.prepare()
+        await ws.prepare(request)
 
-        full_start = time.time()
-
-        node_network = runtime_node_network(request.query.get("select_id"))
+        node_id = int((await ws.receive()).data)
+        node_network = runtime_node_network(node_id)
         node_layer = runtime_node_layer(node_network)
 
-        ncw = dict.fromkeys(node_network, bytearray)
+        for nls in reversed(node_layer):
+            for nid in nls:
+                result = await runtime_node_play(nid)
 
-        node_start = time.time()
+                await ws.send_str(result[0])
 
-        for nd in node_layer:
-            for k in nd:
-                await runtime_node_play(nd[k], k, node_layer, ws, ncw[k])
-
-        node_end = time.time()
-
-        runtime_content_write(ncw, ws)
-
-        full_end = time.time()
-
-        print(f"full time: {full_end - full_start}, node time: {node_end - node_start}")
+                if not result[1]:
+                    raise RuntimeError(
+                        f"runtime error occurred. id: {nid}, message: {result[0]}"
+                    )
 
         await ws.close()
 
@@ -463,122 +473,90 @@ async def runtime_handle(request: web.Request):
     return ws
 
 
-def runtime_node_network(center_ID):
+def runtime_node_network(id: int):
+    nn = set()
+
+    runtime_node_network_chain(nn, id)
+
+    return list(nn)
+
+
+def runtime_node_network_chain(nn: set, id: int):
     global node
 
-    nn: dict[int, Node] = {}
-    nn[center_ID] = node[center_ID]
+    n = node[id]
+    nn.add(id)
 
-    for pa in node[center_ID].input:
-        runtime_node_network_chain(nn, pa)
+    for pa in n.input:
+        if pa.id != None and pa.id not in nn:
+            runtime_node_network_chain(nn, pa.id)
 
-    for pal in node[center_ID].output:
+    for pal in n.output:
         for pa in pal:
-            runtime_node_network_chain(nn, pa)
+            if pa.id != None and pa.id not in nn:
+                runtime_node_network_chain(nn, pa.id)
 
-    return nn
 
-
-def runtime_node_network_chain(nn: dict[int, Node], pa: NodePortAddress):
+def runtime_node_layer(nn: list[int]):
     global node
 
-    if pa.id in nn:
-        return
+    nl: list[set] = []
 
-    nn[pa.id] = node[pa.id]
+    for id in nn:
+        if len(node[id].output) == 0:
+            runtime_node_layer_chain(nl, 0, id)
 
-    for pa in node[pa.id].input:
-        runtime_node_network_chain(nn, pa)
+    nid_s = set()
 
-    for pal in node[pa.id].output:
-        for pa in pal:
-            runtime_node_network_chain(nn, pa)
+    for nll in reversed(nl):
 
+        nid_r = set()
 
-def runtime_node_layer(nn: dict[int, Node]):
-    nl: list[dict[int, Node]] = []
-    nl.append({})
+        for nid in nll:
+            if nid in nid_s:
+                nid_r.add(nid)
+            else:
+                nid_s.add(nid)
 
-    for k in nn:
-        if len(nn[k].output) == 0:
-            nl[0][k] = nn[k]
-
-    for k in nl[0]:
-        for pal in nl[0][k].output:
-            for pa in pal:
-                runtime_node_layer_down(nn, nl, pa, 1)
-
-    layer = len(nl)
-
-    for nlr in reversed(nl):
-        layer -= 1
-
-        for nk in nlr:
-            for nlrb in reversed(nl[:layer]):
-                if nk in nlrb:
-                    del nlrb[nk]
+        nll.difference_update(nid_r)
 
     return nl
 
 
-def runtime_node_layer_down(
-    nn: dict[int, Node], nl: list[dict[int, Node]], pa: NodePortAddress, i: int
-):
-    if len(nl) <= i:
-        nl.append({})
-
-    nl[i][pa.id] = nn[pa.id]
-
-    i += 1
-
-    for pal in nn[pa.id].output:
-        for pa in pal:
-            runtime_node_layer_down(nn, nl, pa, i)
-
-
-async def runtime_content_write(nc: dict[int, bytearray], ws: web.WebSocketResponse):
+def runtime_node_layer_chain(nl: list[set], nl_index: int, id: int):
     global node
 
-    buffer = bytearray()
+    if len(nl) <= nl_index:
+        nl.append(set())
 
-    for k in nc:
-        if buffer:
-            buffer.extend(b",")
+    nl[nl_index].add(id)
+    nl_index += 1
 
-        buffer.extend(struct.pack(">I", k) + struct.pack(">I", len(nc[k])) + nc[k])
-        node[k].content = bytes(nc[k])
-
-    await ws.send_bytes(buffer)
+    for pa in node[id].input:
+        if pa.id != None:
+            runtime_node_layer_chain(nl, nl_index, pa.id)
 
 
-async def runtime_node_play(
-    node: Node,
-    id: int,
-    nn: dict[int, Node],
-    ws: web.WebSocketResponse,
-    ncw: bytearray,
-):
+async def runtime_node_play(id: int):
+    global node
     global memory
 
     try:
+        n = node[id]
         age = []
 
-        for pa in node.input:
-            age.append(nn[pa.id].output_buff[pa.port])
+        for pa in n.input:
+            age.append(node[pa.id].output_buff[pa.port])
 
-        if "system_access" in node.data.meta:
-            keys = {}
-            keys["_memory"] = memory
-            keys["_content_read"] = node.content
-            keys["_content_write"] = ncw
+        if "system_access" in n.data.meta:
+            sys = WorkSpaceSys(memory, n.content)
+            n.output_buff = n.data.function(sys, *age)
+            n.content = sys.content
+            return (f"status=success&id={id}&content={n.content}", True)
 
-            await node.data.function(*age, **keys)
         else:
-            await node.data.function(*age)
-
-        ws.send_str(f"status=success&id={id}")
-        return True
+            n.output_buff = node[id].data.function(*age)
+            return (f"status=success&id={id}", True)
 
     except Exception as e:
-        ws.send_str(f"status=error&id={id}error={str(e)}")
-        return False
+        return (f"status=error&id={id}&error={str(e)}", False)
