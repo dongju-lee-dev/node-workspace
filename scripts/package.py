@@ -63,6 +63,7 @@ def init():
                         if hasattr(module, var_name):
                             meta = getattr(module, var_name)
                             tool[meta["tool_name"]] = member(meta)
+                            print(meta["tool_name"])
 
     return [
         web.get("/packages", package_handle),

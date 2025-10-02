@@ -7,6 +7,7 @@ the settings will remain unless you directly delete the settings information.
 
 import file
 import toml
+import json
 from aiohttp import web
 
 SETTING_FILE_PATH = "/settings/setting.toml"
@@ -64,7 +65,7 @@ async def post_handle(request: web.Request):
         return web.Response(status=400, text="net key")
 
     if "value" in data:
-        setting[data["key"]] = data["value"]
+        setting[data["key"]] = json.loads(data["value"])
     else:
         setting[data["key"]] = None
 
@@ -86,7 +87,7 @@ async def put_handle(request: web.Request):
     if "value" not in data:
         return web.Response(status=400, text="net value")
 
-    setting[data.get("key")] = data.get("value")
+    setting[data.get("key")] = json.loads(data.get("value"))
 
     return web.Response(status=200)
 
@@ -106,7 +107,7 @@ async def patch_handle(request: web.Request):
     if "value" not in data:
         return web.Response(status=400, text="net value")
 
-    setting[data.get("key")] = data.get("value")
+    setting[data.get("key")] = json.loads(data.get("value"))
 
     return web.Response(status=200)
 

@@ -9,14 +9,11 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# package로 추가된 것과 기본적인 모두에 attachShadow를 추가할 것
-# side-panel에 content 부분에 shadow DOM 추가
 # workspace meta data 지원
 
 # bulit_in_tool
-# 1.setting : setting 기능을 사용할 수 있게 하기 생성, 삭제, 수정
-# 2.console view : 안 만듬
-# 3.menory view : 안 만듬
+# 2.console view : 콜솔 출격 결과를 반환
+# 3.menory view : 메모리의 변화를 감지고 업데이트
 # 4.package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가
 
 # 출시 전 단계
