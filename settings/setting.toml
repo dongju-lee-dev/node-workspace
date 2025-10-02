@@ -4,5 +4,5 @@ externalSaveWorkspacePath = []
 host = "localhost"
 port = 8080
 workspace-state = "-7707.444100538452,-5573.616528388227,0.10941898913151243"
-side-panel-state-left = "built_in_tool_workspace,400,on"
+side-panel-state-left = "built_in_tool_setting,400,on"
 side-panel-state-right = ",0,on"

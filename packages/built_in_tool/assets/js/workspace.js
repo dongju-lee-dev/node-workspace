@@ -1,9 +1,10 @@
 const workSpace = dataBase.get('workSpace');
+const shadowDOM_tbl = dataBase.get('CreatePackageShadowDOM')('top-bar-left')
 
-//시작과 동시에 fetch로 workspace lastOpen을 통해서 연다.
+shadowDOM_tbl.host.style.display = 'flex';
+shadowDOM_tbl.host.style.justifyContent = 'flex-start';
 
 // == text == 
-
 const text = document.createElement('div');
 
 text.textContent = 'This is workspace name';
@@ -11,24 +12,67 @@ text.style.color = 'var(--text-color)';
 text.style.fontSize = '24px';
 text.style.margin = '8px 5px 10px 5px';
 
-dataBase.get('layout')['leftTop'].appendChild(text);
+shadowDOM_tbl.appendChild(text);
 
-// == icon ==
+// == save folder ==
+const saveFolder = document.createElement('div');
 
-const icon = document.createElement('div');
+saveFolder.classList.add('icon');
+saveFolder.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_save_icon.png)';
+saveFolder.style.backgroundSize = 'cover';
+saveFolder.style.margin = '6px';
+saveFolder.style.height = '36px';
+saveFolder.style.width = '36px';
 
-icon.classList.add('icon');
-icon.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_save_icon.png)';
-icon.style.backgroundSize = 'cover';
+shadowDOM_tbl.appendChild(saveFolder);
 
-dataBase.get('layout')['leftTop'].appendChild(icon);
+// == save ==
+const save = document.createElement('div');
 
-// == content ==
+save.classList.add('icon');
+save.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_file_save_icon.png)'
+save.style.backgroundSize = 'cover';
+save.style.margin = '6px';
+save.style.height = '36px';
+save.style.width = '36px';
+
+save.addEventListener('click', async e => {
+    if (e.button !== 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (workSpace.name === null) {
+        workSpace.name = prompt('Please define the name of the workspace file to be saved.');
+
+        if (workSpace.name === null) return;
+
+        const response = await fetch(`/workspace?command=new&name=${workSpace.name}`);
+        const text = await response.text();
+
+        if (text !== '') {
+            alert(`save error: ${text}`);
+            return;
+        }
+    }
+
+    const response = await fetch(`/workspace?command=save&name=${workSpace.name}`);
+    const text = await response.text();
+
+    if (text === '')
+        alert('save success');
+    else
+        alert(`save error: ${text}`);
+});
+
+shadowDOM_tbl.appendChild(save);
+
+// == side panel content ==
 
 const response_wc = await fetch('/packages/assets/built_in_tool/assets/html/workspace-content.html');
 const html_wc = await response_wc.text();
 
-dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_workspace', 'Workspace', html_wc, 400, 800, (doc) => {
+dataBase.get('SetSidePanelEvent')(saveFolder, 'built_in_tool_workspace', 'Workspace', html_wc, 400, 800, (doc) => {
     fetch('/workspace?command=list')
         .then(response => response.text())
         .then(data => {
@@ -142,54 +186,10 @@ function createItem(name) {
     return li;
 }
 
-// == save workspace ==
-
-const save = document.createElement('div');
-
-save.classList.add('icon');
-save.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_file_save_icon.png)'
-save.style.backgroundSize = 'cover';
-
-save.addEventListener('click', async e => {
-    if (e.button !== 0) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (workSpace.name === null) {
-        workSpace.name = prompt('Please define the name of the workspace file to be saved.');
-
-        const response = await fetch(`/workspace?command=new&name=${workSpace.name}`);
-        const text = await response.text();
-
-        if (text !== '') {
-            alert(`save error: ${text}`);
-
-            return;
-        }
-    }
-
-    const response = await fetch(`/workspace?command=save&name=${workSpace.name}`);
-    const text = await response.text();
-
-    if (text === '')
-        alert('save success');
-    else
-        alert(`save error: ${text}`);
-});
-
-dataBase.get('layout')['leftTop'].appendChild(save);
-
-// == control bar ==
+// == work space top control bar ==
 
 const response_wcb = await fetch('/packages/assets/built_in_tool/assets/html/workspace-control-bar.html');
-const html_wcb = await response_wcb.text();
-
-const workSpaceTop = dataBase.get('workSpaceTop');
-
-workSpaceTop.insertAdjacentHTML('beforeend', html_wcb);
-
-const wcb = workSpaceTop.lastElementChild;
+const wcb = dataBase.get('CreatePackageShadowDOM')('work-space-top', await response_wcb.text());
 
 wcb.addEventListener('click', e => {
     if (e.button !== 0) return;
@@ -204,14 +204,9 @@ wcb.addEventListener('click', e => {
 // == workspace node == 
 
 const response_wnn = await fetch('/packages/assets/built_in_tool/assets/html/workspace-new-node.html');
-const html_wnn = await response_wnn.text();
-
-const windowsField = dataBase.get('window-field');
 const node = dataBase.get('nodeKey');
+const wnn = dataBase.get('CreatePackageShadowDOM')('window-field', await response_wnn.text()).querySelector('#workspace-new-node');
 
-windowsField.insertAdjacentHTML('beforeend', html_wnn);
-
-const wnn = windowsField.lastElementChild;
 let list = [];
 let len = Object.keys(node).length;
 let wnnSelect = false;
@@ -272,7 +267,6 @@ workSpace.setCommand([
         }],
     [
         'delete node', e => {
-            console.log(workSpace.nodeSelect)
             if (workSpace.nodeSelect !== null && workSpace.nodeSelect.classList.contains('node'))
                 workSpace.deleteNode(workSpace.nodeSelect.id);
         }

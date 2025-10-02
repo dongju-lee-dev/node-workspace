@@ -9,6 +9,10 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
+# package로 추가된 것과 기본적인 모두에 attachShadow를 추가할 것
+# side-panel에 content 부분에 shadow DOM 추가
+# workspace meta data 지원
+
 # bulit_in_tool
 # 1.setting : setting 기능을 사용할 수 있게 하기 생성, 삭제, 수정
 # 2.console view : 안 만듬
@@ -18,8 +22,7 @@ from scripts import workspace
 # 출시 전 단계
 # venv 에서 uv 전환 필요
 # setup.py를 만들어서 미리 설치해야하는 것을 설치하자
-# workspace meta data 지원
-# package로 추가된 것과 기본적인 모두에 attachShadow를 추가할 것
+
 # 모든 통신을 REST API 형식으로 변경
 # 모든 기본 통신을 json 형식으로 변경
 # 문서 작성 : package, node, tool, workspace
@@ -59,12 +62,6 @@ from scripts import workspace
 # === v2.0 ===
 
 setting.read()
-
-if not setting.existe("host"):
-    setting.set("host", "localhost")
-
-if not setting.existe("port"):
-    setting.set("port", 8080)
 
 app = web.Application()
 

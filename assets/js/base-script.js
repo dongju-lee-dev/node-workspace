@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     dataBase.set('rightSidePanel', sidePanel[1]);
 
     //함수
+    dataBase.set('CreatePackageShadowDOM', CreatePackageShadowDOM);
     dataBase.set('SetSidePanelEvent', SetSidePanelEvent);
 
     let nodeKeyBuff = (await (await nodeResponse).text()).split('#');
@@ -103,6 +104,30 @@ window.addEventListener('beforeunload', (e) => {
     });
 });
 
+function CreatePackageShadowDOM(target, html = null) {
+    let div = document.createElement('div');
+
+    div.attachShadow({ mode: 'open' });
+
+    if (target === 'window-field')
+        dataBase.get('window-field').appendChild(div);
+    else if (target === 'work-space-top')
+        dataBase.get('workSpaceTop').appendChild(div);
+    else if (target === 'work-space-bottom')
+        dataBase.get('workSpaceBottom').appendChild(div);
+    else if (target === 'top-bar-left')
+        dataBase.get('layout')['leftTop'].appendChild(div);
+    else if (target === 'top-bar-right')
+        dataBase.get('layout')['rightTop'].appendChild(div);
+    else if (target === 'bottom-bar-left')
+        dataBase.get('layout')['leftBottom'].appendChild(div);
+    else if (target === 'bottom-bar-right')
+        dataBase.get('layout')['rightBottom'].appendChild(div);
+
+    if (html != null) div.shadowRoot.innerHTML = html;
+
+    return div.shadowRoot;
+}
 
 function SetSidePanelEvent(element, key, name, content, minWidth, maxWidth, start, exit) {
     if (!dataBase.has('sidePanel-setTool')) dataBase.set('sidePanel-setTool', new Map());

@@ -5,87 +5,132 @@ If you add settings to a package and then delete the package and reinstall the p
 the settings will remain unless you directly delete the settings information.
 """
 
+import file
 import toml
 from aiohttp import web
 
-_setting: dict
+SETTING_FILE_PATH = "/settings/setting.toml"
+
+setting: dict
 
 
 def init():
     return [
-        web.get("/setting", handle),
+        web.get("/setting", get_handle),
+        web.post("/setting", post_handle),
+        web.put("/setting", put_handle),
+        web.patch("/setting", patch_handle),
+        web.delete("/setting", delete_handle),
     ]
 
 
-def handle(request: web.Request):
-    command = request.query.get("command")
-    text = ""
-
-    if command == "get":
-        text = str(get(request.query.get("key")))
-    elif command == "set":
-        set(request.query.get("key"), request.query.get("value"))
-    elif command == "add":
-        add(request.query.get("key"), request.query.get("value"))
-    elif command == "remove":
-        remove(request.query.get("key"))
-    elif command == "existe":
-        existe(request.query.get("key"))
-    else:
-        text = f"error : {command} is not a valid command."
-
-    return web.Response(text=text)
-
-
 def read():
-    """setting file read"""
+    global setting
 
-    global _setting
-
-    _setting = toml.load("settings/setting.toml")
+    setting = toml.loads(file.read_file(SETTING_FILE_PATH))
 
 
 def write():
-    """setting file write"""
+    global setting
 
-    global _setting
-
-    toml.dump(_setting, open("settings/setting.toml", "w"))
+    file.write_file(SETTING_FILE_PATH, toml.dumps(setting))
 
 
-def get(key: str):
-    """Get setting value"""
+async def get_handle(request: web.Request):
+    global setting
 
-    global _setting
+    key = request.query.get("key")
 
-    return _setting.get(key)
-
-
-def set(key: str, value: any):
-    """Set setting value"""
-
-    global _setting
-
-    _setting[key] = value
-
-
-def add(key: str, data: any):
-    """Add settings"""
-
-    global _setting
-
-    _setting[key] = data
+    if key == "_all":
+        return web.json_response(setting)
+    elif key == "_all_key":
+        return web.json_response(list(setting.keys()))
+    elif key == "_all_value":
+        return web.json_response(list(setting.values()))
+    else:
+        return web.json_response(setting[key])
 
 
-def remove(key: str):
-    """Remove settings"""
+async def post_handle(request: web.Request):
+    global setting
 
-    global _setting
+    try:
+        data = await request.json()
 
-    del _setting[key]
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+    if "key" not in data:
+        raise Exception("net key")
+
+    if "value" in data:
+        setting[data["key"]] = data["value"]
+    else:
+        setting[data["key"]] = None
+
+    return web.Response(status=200)
 
 
-def existe(key: str):
-    """Check settngs"""
+async def put_handle(request: web.Request):
+    global setting
 
-    return key in _setting
+    try:
+        data = await request.json()
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+    setting[data.get("key")] = data.get("value")
+
+    return web.Response(status=200)
+
+
+async def patch_handle(request: web.Request):
+    global setting
+
+    try:
+        data = await request.json()
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+    setting[data.get("key")] = data.get("value")
+
+    return web.Response(status=200)
+
+
+async def delete_handle(request: web.Request):
+    global setting
+
+    key = request.query.get("key")
+
+    if key in setting:
+        del setting[key]
+        return web.Response(status=200)
+
+    else:
+        return web.Response(status=400)
+
+
+def create(key):
+    global setting
+
+    setting[key] = None
+
+
+def delete(key):
+    global setting
+
+    del setting[key]
+
+
+def get(key):
+    global setting
+
+    return setting[key]
+
+
+def set(key, value):
+    global setting
+
+    setting[key] = value

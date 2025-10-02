@@ -83,12 +83,6 @@ def init():
     if not file.existe_directory(WORKSPACE_PATH):
         file.create_directory(WORKSPACE_PATH)
 
-    if not setting.existe("externalSaveWorkspacePath"):
-        setting.add("externalSaveWorkspacePath", [])
-
-    if not setting.existe("lastOpenWorkspaceName"):
-        setting.set("lastOpenWorkspaceName", "")
-
     yaml.SafeLoader.add_constructor(
         "tag:yaml.org,2002:python/object:scripts.workspace.NodeSave",
         lambda loader, data: NodeSave(**loader.construct_mapping(data)),

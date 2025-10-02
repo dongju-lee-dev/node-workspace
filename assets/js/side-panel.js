@@ -48,7 +48,8 @@ export class Sidepanel extends HTMLElement {
 
         this.key = '';
         this.name = this.shadowRoot.querySelector('#name');
-        this.content = this.shadowRoot.querySelector('#content');
+        this.content = this.shadowRoot.querySelector('#content').attachShadow({ mode: 'open' });
+
         this.minWidth = 0;
         this.maxWidth = 0;
         this.exit = null;
