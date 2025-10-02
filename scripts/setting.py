@@ -61,7 +61,7 @@ async def post_handle(request: web.Request):
         return web.Response(status=400, text=str(e))
 
     if "key" not in data:
-        raise Exception("net key")
+        return web.Response(status=400, text="net key")
 
     if "value" in data:
         setting[data["key"]] = data["value"]
@@ -80,6 +80,12 @@ async def put_handle(request: web.Request):
     except Exception as e:
         return web.Response(status=400, text=str(e))
 
+    if "key" not in data:
+        return web.Response(status=400, text="net key")
+
+    if "value" not in data:
+        return web.Response(status=400, text="net value")
+
     setting[data.get("key")] = data.get("value")
 
     return web.Response(status=200)
@@ -93,6 +99,12 @@ async def patch_handle(request: web.Request):
 
     except Exception as e:
         return web.Response(status=400, text=str(e))
+
+    if "key" not in data:
+        return web.Response(status=400, text="net key")
+
+    if "value" not in data:
+        return web.Response(status=400, text="net value")
 
     setting[data.get("key")] = data.get("value")
 
@@ -109,7 +121,7 @@ async def delete_handle(request: web.Request):
         return web.Response(status=200)
 
     else:
-        return web.Response(status=400)
+        return web.Response(status=400, text="Key value is invalid")
 
 
 def create(key):

@@ -76,7 +76,7 @@ export class Sidepanel extends HTMLElement {
             this.leftArrow.addEventListener('click', this.Fold);
             this.rightArrow.addEventListener('click', this.Change);
 
-            data = (await (await fetch(`/setting?command=get&key=side-panel-state-left`)).text()).split(',');
+            data = (await (await fetch(`/setting?key=side-panel-state-left`)).text()).split(',');
         }
         else {
             this.classList.add('right');
@@ -86,7 +86,7 @@ export class Sidepanel extends HTMLElement {
             this.leftArrow.addEventListener('click', this.Change);
             this.rightArrow.addEventListener('click', this.Fold);
 
-            data = (await (await fetch(`/setting?command=get&key=side-panel-state-right`)).text()).split(',');
+            data = (await (await fetch(`/setting?key=side-panel-state-right`)).text()).split(',');
         }
 
         this.key = data[0];
@@ -96,10 +96,19 @@ export class Sidepanel extends HTMLElement {
         if (data[0] === '')
             this.Exit();
 
-        if (data[2] === 'on')
-            this.Unfold();
-        else
-            this.Fold();
+        if (data[2] === 'on') {
+
+            this.style.transform = `translateX(0px)`;
+            this.unfold.style.display = 'none';
+        }
+        else {
+            if (this.getAttribute('point') === 'left')
+                this.style.transform = `translateX(-${this.style.getPropertyValue('--size')})`;
+            else
+                this.style.transform = `translateX(${this.style.getPropertyValue('--size')})`;
+
+            this.unfold.style.display = 'flex';
+        }
     }
 
     Fold = (e) => {
@@ -273,6 +282,18 @@ export class Sidepanel extends HTMLElement {
     }
 
     SaveState() {
-        fetch(`/setting?command=set&key=side-panel-state-${this.getAttribute('point') === 'left' ? 'left' : 'right'}&value=${this.key},${this.size},${this.unfold.style.display === 'none' ? 'on' : 'off'}`);
+        fetch('/setting', {
+            method: 'PATCH',
+            body: JSON.stringify(
+                {
+                    'key': `side-panel-state-${this.getAttribute('point') === 'left' ? 'left' : 'right'}`,
+                    'value': `${this.key},${this.size},${this.unfold.style.display === 'none' ? 'on' : 'off'}`,
+                }
+            ),
+        })
+            .then(response => response.text())
+            .then(text => {
+                if (text !== '') console.log(text)
+            });
     }
 }
