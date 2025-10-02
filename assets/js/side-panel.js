@@ -76,7 +76,7 @@ export class Sidepanel extends HTMLElement {
             this.leftArrow.addEventListener('click', this.Fold);
             this.rightArrow.addEventListener('click', this.Change);
 
-            data = (await (await fetch(`/setting?key=side-panel-state-left`)).text()).split(',');
+            data = (await (await fetch(`/setting?key=side-panel-state-left`)).json()).split(',');
         }
         else {
             this.classList.add('right');
@@ -86,7 +86,7 @@ export class Sidepanel extends HTMLElement {
             this.leftArrow.addEventListener('click', this.Change);
             this.rightArrow.addEventListener('click', this.Fold);
 
-            data = (await (await fetch(`/setting?key=side-panel-state-right`)).text()).split(',');
+            data = (await (await fetch(`/setting?key=side-panel-state-right`)).json()).split(',');
         }
 
         this.key = data[0];

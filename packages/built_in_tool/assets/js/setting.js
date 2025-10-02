@@ -84,7 +84,7 @@ function createTR(key, value) {
         activateEdit(tdk, 'key');
     });
 
-    tdv.textContent = JSON.stringify(value);
+    tdv.textContent = value;
     tdv.addEventListener('click', () => {
         activateEdit(tdv, 'value');
     });
@@ -134,8 +134,6 @@ async function saveEdit(tdCell, newValue, fieldName) {
     const tdk = tr.children[0];
     const tdv = tr.children[1];
 
-    tdCell.textContent = newValue;
-
     if (fieldName === 'key') {
         const fResponse = await fetch(`/setting?key=${tdk.textContent}`, { method: 'DELETE' });
 
@@ -143,6 +141,8 @@ async function saveEdit(tdCell, newValue, fieldName) {
             console.log(await fResponse.text());
             return;
         }
+
+        tdCell.textContent = newValue;
 
         const sResponse = await fetch('/setting',
             {
@@ -159,6 +159,8 @@ async function saveEdit(tdCell, newValue, fieldName) {
         }
     }
     else {
+        tdCell.textContent = newValue;
+
         const response = await fetch('/setting', {
             method: 'PATCH',
             body: JSON.stringify({ key: tdk.textContent, value: tdv.textContent }),

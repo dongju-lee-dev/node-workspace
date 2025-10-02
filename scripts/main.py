@@ -67,6 +67,6 @@ app.add_routes(package.init())
 app.add_routes(workspace.init())
 app.add_routes(setting.init())
 
-web.run_app(app, host=setting.get("host"), port=setting.get("port"))
+web.run_app(app, host=setting.get("host"), port=int(setting.get("port")))
 
 setting.write()

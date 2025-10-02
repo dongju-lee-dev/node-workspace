@@ -65,7 +65,7 @@ async def post_handle(request: web.Request):
         return web.Response(status=400, text="net key")
 
     if "value" in data:
-        setting[data["key"]] = json.loads(data["value"])
+        setting[data["key"]] = data["value"]
     else:
         setting[data["key"]] = None
 
@@ -87,7 +87,7 @@ async def put_handle(request: web.Request):
     if "value" not in data:
         return web.Response(status=400, text="net value")
 
-    setting[data.get("key")] = json.loads(data.get("value"))
+    setting[data.get("key")] = data.get("value")
 
     return web.Response(status=200)
 
@@ -107,7 +107,7 @@ async def patch_handle(request: web.Request):
     if "value" not in data:
         return web.Response(status=400, text="net value")
 
-    setting[data.get("key")] = json.loads(data.get("value"))
+    setting[data.get("key")] = data.get("value")
 
     return web.Response(status=200)
 

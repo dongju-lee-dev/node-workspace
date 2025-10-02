@@ -1,8 +1,5 @@
 version = "0.0.0"
-lastOpenWorkspaceName = ""
-externalSaveWorkspacePath = []
 host = "localhost"
-workspace-state = "-7707.444100538452,-5573.616528388227,0.10941898913151243"
+port = "8080"
 side-panel-state-left = ",0,on"
-side-panel-state-right = ",0,on"
-port = 8080
+side-panel-state-right = "built_in_tool_setting,400,on"
