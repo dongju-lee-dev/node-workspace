@@ -10,6 +10,4 @@ class MemoryView(ToolBase):
         return web.FileResponse("packages/built_in_tool/assets/js/memory_view.js")
     
     def work(self, request):
-        print(memory)
-
         return web.json_response(memory)

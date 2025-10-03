@@ -37,9 +37,11 @@ export class Workspace extends HTMLElement {
 
         this.space.appendChild(this.nodePrefab.querySelector('style'));
 
-        const workspaceData = await fetch('/workspace/editor?command=get').then(response => response.json());
+        const workSpacePath = await fetch('/workspace?command=path').then(response => response.text());
+        const workSpaceData = await fetch('/workspace/editor?command=get').then(response => response.json());
 
-        this.load(, workspaceData)
+        this.unload();
+        this.load(workSpacePath === "NULL" ? null : workSpacePath.split('/')[2], workSpaceData);
     }
 
     spaceMovementHeader = e => {
@@ -399,6 +401,7 @@ export class Workspace extends HTMLElement {
     unload() {
         this.spaceNodeLink.replaceChildren();
         this.spaceNode.replaceChildren();
+        this.node = {}
     }
 
     load(name, space) {

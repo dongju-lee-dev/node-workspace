@@ -139,18 +139,18 @@ async def workspace_handle(request: web.Request):
         result = workspace_new(request.query.get("name"))
     elif command == "delete":
         result = workspace_delete(request.query.get("name"))
+    elif command == "rename":
+        result = workspace_rename(
+            request.query.get("old_name"), request.query.get("new_name")
+        )
     elif command == "load":
         result = workspace_load(request.query.get("name"))
     elif command == "unload":
         result = workspace_unload()
     elif command == "save":
         result = workspace_save(request.query.get("name"))
-    elif command == "rename":
-        result = workspace_rename(
-            request.query.get("old_name"), request.query.get("new_name")
-        )
-    elif command == "open":
-        result = path.split('/')
+    elif command == "path":
+        result = workspace_path()
     else:
         result = f"error : {command} is not a valid command."
 
@@ -186,6 +186,12 @@ def workspace_delete(name: str):
         return str(e)
 
 
+def workspace_rename(old_name: str, new_name: str):
+    return file.rename_directory(
+        f"{WORKSPACE_PATH}/{old_name}", f"{WORKSPACE_PATH}/{new_name}"
+    )
+
+
 def workspace_load(name: str):
     try:
         global node
@@ -208,7 +214,7 @@ def workspace_load(name: str):
             node[key] = n
 
         memory.clear()
-        path = f"{WORKSPACE_PATH}/{name}/space.nww"
+        path = f"{WORKSPACE_PATH}/{name}"
 
         return json.dumps(buff, default=lambda obj: obj.__dict__, indent=4)
 
@@ -260,10 +266,13 @@ def workspace_save(name: str):
         return str(e)
 
 
-def workspace_rename(old_name: str, new_name: str):
-    return file.rename_directory(
-        f"{WORKSPACE_PATH}/{old_name}", f"{WORKSPACE_PATH}/{new_name}"
-    )
+def workspace_path():
+    global path
+
+    if None == path:
+        return "NULL"
+
+    return path
 
 
 async def editor_handle(request: web.Request):
@@ -330,7 +339,13 @@ def editor_get():
             value.content,
         )
 
-    return web.json_response(buff)
+    return web.json_response(
+        buff,
+        dumps=lambda data: json.dumps(
+            data,
+            default=lambda obj: obj.__dict__,
+        ),
+    )
 
 
 def editor_create(node_group, node_name, position_x, position_y):
