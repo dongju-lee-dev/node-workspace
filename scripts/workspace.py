@@ -18,7 +18,7 @@ class WorkSpaceSys:
     def __init__(self, memory, content):
         self.memory = memory
         self.content = content
-        
+
 
 class NodePortAddress:
     id: int
@@ -149,8 +149,8 @@ async def workspace_handle(request: web.Request):
         result = workspace_rename(
             request.query.get("old_name"), request.query.get("new_name")
         )
-    elif command == "lastOpen":
-        result = setting.get("lastOpenWorkspaceName")
+    elif command == "open":
+        result = path.split('/')
     else:
         result = f"error : {command} is not a valid command."
 
@@ -270,7 +270,9 @@ async def editor_handle(request: web.Request):
     command = request.query.get("command")
     result = ""
 
-    if command == "create":
+    if command == "get":
+        return editor_get()
+    elif command == "create":
         result = editor_create(
             request.query.get("node_group"),
             request.query.get("node_name"),
@@ -310,6 +312,25 @@ async def editor_handle(request: web.Request):
         result = f"error : {command} is not a valid command."
 
     return web.Response(text=result)
+
+
+def editor_get():
+    global node
+
+    buff = {}
+
+    for key, value in node.items():
+        buff[key] = NodeSave(
+            value.data.meta["node_group"],
+            value.data.meta["node_name"],
+            value.input,
+            value.output,
+            value.position_x,
+            value.position_y,
+            value.content,
+        )
+
+    return web.json_response(buff)
 
 
 def editor_create(node_group, node_name, position_x, position_y):

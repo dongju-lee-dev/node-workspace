@@ -9,30 +9,29 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# workspace meta data 지원
+# scripts
+# venv 에서 uv로 변경
+# setup.py를 통해서 기본 python package 설치
 
-# bulit_in_tool
-# 2.console view : 콜솔 출격 결과를 반환
-# 3.menory view : 메모리의 변화를 감지고 업데이트
-# 4.package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가
+# scripts
+# packages 통신 관련 리팩토링 (REST API, JSON)
 
-# 출시 전 단계
-# venv 에서 uv 전환 필요
-# setup.py를 만들어서 미리 설치해야하는 것을 설치하자
+# built_in_tool_package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가, 패키지에 로컬 폴더를 집어 넣는 기능 추가
 
-# 모든 통신을 REST API 형식으로 변경
-# 모든 기본 통신을 json 형식으로 변경
-# 문서 작성 : package, node, tool, workspace
+# scripts
+# workspace 통신 관련 리팩토링 (REST API, JSON)
+# workspace 메타 데이터 지원
+# workspace 외부 저장 작업 공간 주소 기능 추가
+
+# 문서 : package, node, tool, workspace, webUI 작성
+# 라이선스 : MIT 라이선스에서 Apache 2.0 라이선스로 변경
+
+# 출시 1.0
 
 # === v1.0 ===
 
-# 기능 개발 순서
-# 패키지에 로컬 폴더를 집어 넣는 기능 추가
-# 외부 저장 작업 공간 주소 기능 추가
-
-# 패키지 개발 순서
+# 패키지 개발
 # signal : 노드를 원격 실행
-# custom_node : 커스텀 노드
 # preview : 이미지, 소리, 3d모델에 대한 프리뷰 제공
 # hw_info : 하드웨어 상태확인
 # numpy : cpu 가속
@@ -53,7 +52,7 @@ from scripts import workspace
 # 다양한 피드백을 받는다.
 # 다중 사용자 기능
 # 다중 편집 기능
-# 다중 언어 지원 ???
+# 다중 언어 지원
 # 언어 변경을 고려 할 것
 
 # === v2.0 ===

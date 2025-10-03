@@ -1,13 +1,15 @@
 <div class="layout">
-    <table>
-        <thead>
-            <tr>
-                <td>key</td>
-                <td>value</td>
-            </tr>
-        </thead>
-        <tbody id="settings-table"></tbody>
-    </table>
+    <div class="table-scroll-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <td>key</td>
+                    <td>value</td>
+                </tr>
+            </thead>
+            <tbody id="settings-table"></tbody>
+        </table>
+    </div>
     <button id="add-setting-btn">Add</button>
     <button id="remove-setting-btn">Remove</button>
 </div>
@@ -22,6 +24,31 @@
         padding: 10px;
         flex-direction: column;
         justify-content: flex-start;
+    }
+
+    .table-scroll-wrapper {
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar {
+        width: 8px;
+        background: var(--background-color);
+        border-radius: 5px;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar-thumb {
+        background: var(--point-small-color);
+        border-radius: 5px;
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+        background: var(--point-color);
+    }
+
+    .table-scroll-wrapper::-webkit-scrollbar-track {
+        background: var(--background-color);
+        border-radius: 5px;
     }
 
     .layout table {

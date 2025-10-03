@@ -10,7 +10,7 @@ CONTENT_TO_INT_META = {
             "color": "var(--color-int)",
         },
     ],
-    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input-number.html"),
     "system_access": True,
 }
 
@@ -31,7 +31,7 @@ CONTENT_TO_FLOAT_META = {
             "color": "var(--color-float)",
         },
     ],
-    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input-number.html"),
     "system_access": True,
 }
 
@@ -52,7 +52,7 @@ CONTENT_TO_STRING = {
             "color": "var(--color-string)",
         },
     ],
-    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input-text.html"),
     "system_access": True,
 }
 
@@ -73,7 +73,7 @@ CONTENT_TO_BOOL = {
             "color": "var(--color-bool)",
         },
     ],
-    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input-text.html"),
     "system_access": True,
 }
 
@@ -94,7 +94,7 @@ MEMORY_READ_META = {
             "color": "var(--color-any)",
         },
     ],
-    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input-text.html"),
     "system_access": True,
 }
 
@@ -115,7 +115,7 @@ MEMORY_WRITE_META = {
         },
     ],
     "output": [],
-    "content": file.read_file("packages/built_in_node/assets/html/content-input.html"),
+    "content": file.read_file("packages/built_in_node/assets/html/content-input-text.html"),
     "system_access": True,
 }
 

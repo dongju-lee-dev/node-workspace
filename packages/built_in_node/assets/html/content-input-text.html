@@ -1,0 +1,39 @@
+<input id="built-in-node-content-input-text" type="text">
+<style>
+    #built-in-node-content-input-text {
+        padding: 2px 6px;
+        font-size: 15px;
+        color: var(--text-color);
+        background: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+    }
+
+    #built-in-node-content-input-text[type="text"] {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        margin: 0;
+    }
+
+    #built-in-node-content-input-text[type="text"]::-webkit-inner-spin-button,
+    #built-in-node-content-input-text[type="text"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+<script>
+    const workSpace = dataBase.get('workSpace');
+    const input = node.querySelector('#built-in-node-content-input-text');
+
+    if (content !== null) {
+        input.value = content;
+    }
+
+    input.addEventListener('change', e => {
+        workSpace.contentNode(node.id, input.value);
+    });
+    input.addEventListener('mousedown', e => {
+        if (e.button === 0) e.stopPropagation();
+    });
+</script>

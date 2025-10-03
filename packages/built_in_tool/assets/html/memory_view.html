@@ -1,0 +1,76 @@
+<div>
+    <table>
+        <thead>
+            <tr>
+                <td>key</td>
+                <td>value</td>
+            </tr>
+        </thead>
+        <tbody id="memory-table"></tbody>
+    </table>
+</div>
+<style>
+    div {
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    div::-webkit-scrollbar {
+        width: 8px;
+        background: var(--background-color);
+        border-radius: 5px;
+    }
+
+    div::-webkit-scrollbar-thumb {
+        background: var(--point-small-color);
+        border-radius: 5px;
+    }
+
+    div::-webkit-scrollbar-thumb:hover {
+        background: var(--point-color);
+    }
+
+    div::-webkit-scrollbar-track {
+        background: var(--background-color);
+        border-radius: 5px;
+    }
+
+    table {
+        width: 100%;
+        padding: 10px;
+    }
+
+    table thead tr td,
+    table tbody tr td {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: var(--text-color);
+        padding: 0px 5px;
+        height: 20px;
+    }
+
+    table thead tr td:first-child,
+    table tbody tr td:first-child {
+        width: 40%;
+    }
+
+    table thead tr td:last-child,
+    table tbody tr td:last-child {
+        width: 60%;
+    }
+
+    table tbody tr td {
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    table tbody tr td {
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    table tbody tr td:hover {
+        background-color: var(--background-color-hover);
+    }
+</style>

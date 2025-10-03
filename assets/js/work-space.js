@@ -37,7 +37,9 @@ export class Workspace extends HTMLElement {
 
         this.space.appendChild(this.nodePrefab.querySelector('style'));
 
-        fetch('/workspace?command=unload');
+        const workspaceData = await fetch('/workspace/editor?command=get').then(response => response.json());
+
+        this.load(, workspaceData)
     }
 
     spaceMovementHeader = e => {

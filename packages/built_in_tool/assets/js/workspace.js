@@ -3,6 +3,7 @@ const shadowDOM_tbl = dataBase.get('CreatePackageShadowDOM')('top-bar-left')
 
 shadowDOM_tbl.host.style.display = 'flex';
 shadowDOM_tbl.host.style.justifyContent = 'flex-start';
+shadowDOM_tbl.host.style.order = '0';
 
 // == text == 
 const text = document.createElement('div');
