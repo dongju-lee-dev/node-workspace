@@ -7,7 +7,6 @@ the settings will remain unless you directly delete the settings information.
 
 import file
 import toml
-import json
 from aiohttp import web
 
 SETTING_FILE_PATH = "/settings/setting.toml"

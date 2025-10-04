@@ -1,8 +1,8 @@
-import configparser
 import json
 import subprocess
 import sys
 import git
+import toml
 import inspect
 import importlib
 from aiohttp import web
@@ -120,16 +120,16 @@ def package_add(url: str):
 
         git.Repo.clone_from(url, file.get_absolute_path(path))
 
-        config = configparser.ConfigParser()
-        config.read(f"{path}/config.ini", encoding="utf-8")
+        config = toml.loads(file.read_file(f"{path}/config.toml"))
 
-        for package_name in config["packages"].split(","):
-            subprocess.run(
-                [sys.executable, "-m", "pip", "install", package_name],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
+        if config["packages"] != "":
+            for package_name in config["packages"].split(","):
+                subprocess.run(
+                    [sys.executable, "-m", "uv", "pip", "install", package_name],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
 
         file.rename_directory(path, f"{PACKAGE_PATH}/{config['name']}")
         file.delete_directory(path)
