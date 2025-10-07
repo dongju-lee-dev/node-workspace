@@ -1,0 +1,74 @@
+<div id="root">
+    <input type="text" id="package-git-url" class="input">
+    <h4 id="package-git-url-text"></h4>
+    <div>
+        <button id="package-add-btn" class="btn">add</button>
+        <button id="package-remove-btn" class="btn">remove</button>
+    </div>
+    <div id="package-table"></div>
+</div>
+<style>
+    #root {
+        padding: 10px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+
+    #package-git-url {
+        width: 100%;
+        height: 36px;
+        padding: 0px 5px;
+        color: var(--text-color);
+        font-size: 16px;
+        font-weight: 400;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+
+    #package-git-url-text {
+        color: var(--text-color);
+        font-size: 12px;
+        padding: 0px 0px 5px 10px;
+        margin: 0px;
+        margin-bottom: 5px;
+    }
+
+    .btn {
+        height: 30px;
+        width: 60px;
+        margin-bottom: 10px;
+        color: var(--text-color-hover);
+        text-align: center;
+        background: var(--point-color);
+        border-radius: 10px;
+    }
+
+    .btn:hover {
+        background: var(--point-small-color);
+    }
+
+    #package-table {
+        flex-grow: 1;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .package-item {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: var(--text-color);
+        padding: 0px 5px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .package-item:hover {
+        background-color: var(--background-color-hover);
+    }
+</style>

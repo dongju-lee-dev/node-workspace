@@ -18,7 +18,6 @@ shadowDOM_tbl.appendChild(text);
 // == save folder ==
 const saveFolder = document.createElement('div');
 
-saveFolder.classList.add('icon');
 saveFolder.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_save_icon.png)';
 saveFolder.style.backgroundSize = 'cover';
 saveFolder.style.margin = '6px';
@@ -30,7 +29,6 @@ shadowDOM_tbl.appendChild(saveFolder);
 // == save ==
 const save = document.createElement('div');
 
-save.classList.add('icon');
 save.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/workspace_file_save_icon.png)'
 save.style.backgroundSize = 'cover';
 save.style.margin = '6px';

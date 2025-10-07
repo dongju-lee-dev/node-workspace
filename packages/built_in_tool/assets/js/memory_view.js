@@ -1,11 +1,10 @@
 const shadowDOM_tbl = dataBase.get('CreatePackageShadowDOM')('top-bar-left');
 shadowDOM_tbl.host.style.display = 'flex';
 shadowDOM_tbl.host.style.justifyContent = 'flex-start';
-shadowDOM_tbl.host.style.order = '1';
+shadowDOM_tbl.host.style.order = '3';
 
 const icon = document.createElement('div');
 
-icon.classList.add('icon');
 icon.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/memory_view_icon.png)';
 icon.style.backgroundSize = 'cover';
 icon.style.margin = '6px';
@@ -30,6 +29,9 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_memory_view', 'Memory Vie
     });
 
 async function ServerMemoryRead() {
+    if (parent !== null)
+        return
+
     const response = await fetch('/packages/tool',
         {
             method: "POST",

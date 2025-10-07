@@ -5,7 +5,6 @@ shadowDOM_tbr.host.style.order = '100000000';
 
 const icon = document.createElement('div');
 
-icon.classList.add('icon');
 icon.style.backgroundImage = 'url(/packages/assets/built_in_tool/assets/image/setting_icon.png)';
 icon.style.backgroundSize = 'cover';
 icon.style.margin = '6px';
@@ -14,7 +13,7 @@ icon.style.width = '36px';
 
 shadowDOM_tbr.appendChild(icon);
 
-const response = await fetch('/packages/assets/built_in_tool/assets/html/setting-content.html');
+const response = await fetch('/packages/assets/built_in_tool/assets/html/setting.html');
 
 let settingTable = null;
 let addBtn = null;

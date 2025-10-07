@@ -94,6 +94,8 @@ async def package_post_handle(request: web.Request):
 
         config = toml.loads(file.read_file(f"{path}/config.toml"))
 
+        package_name = config["name"]
+        
         if config["packages"] != "":
             for package_name in config["packages"].split(","):
                 subprocess.run(
@@ -103,7 +105,41 @@ async def package_post_handle(request: web.Request):
                     check=True,
                 )
 
-        file.rename_directory(path, f"{PACKAGE_PATH}/{config['name']}")
+        file.rename_directory(path, f"{PACKAGE_PATH}/{package_name}")
+
+        if file.existe_directory(f"{PACKAGE_PATH}/{package_name}/nodes"):
+            for path in file.list_directory(f"{PACKAGE_PATH}/{package_name}/nodes"):
+                module = importlib.import_module(
+                    f"{PACKAGE_PATH}.{package_name}.nodes.{path[:-3]}"
+                )
+
+                for name, member in inspect.getmembers(module):
+                    if inspect.isfunction(member):
+                        var_name = f"{member.__name__}_META".upper()
+
+                        if hasattr(module, var_name):
+                            meta = getattr(module, var_name)
+
+                            if meta["node_group"] not in node:
+                                node[meta["node_group"]] = {}
+
+                            node[meta["node_group"]][meta["node_name"]] = NodeData(
+                                member, meta
+                            )
+
+        if file.existe_directory(f"{PACKAGE_PATH}/{package_name}/tools"):
+            for path in file.list_directory(f"{PACKAGE_PATH}/{package_name}/tools"):
+                module = importlib.import_module(
+                    f"{PACKAGE_PATH}.{package_name}.tools.{path[:-3]}"
+                )
+
+                for name, member in inspect.getmembers(module):
+                    if inspect.isclass(member):
+                        var_name = f"{member.__name__}_META".upper()
+
+                        if hasattr(module, var_name):
+                            meta = getattr(module, var_name)
+                            tool[meta["tool_name"]] = member(meta)
 
         return web.Response(status=200)
 
