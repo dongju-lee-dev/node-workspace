@@ -33,7 +33,14 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_console_view', 'Console V
 const intervalIDSVR = setInterval(ServerConsoleRead, 2000);
 
 async function ServerConsoleRead() {
-    const response = await fetch('/packages/tool?command=work&name=built_in_tool_console_view');
+    const response = await fetch('/packages/tool',
+        {
+            method: "POST",
+            body: JSON.stringify({
+                command: 'work',
+                key: 'built_in_tool_console_view',
+            })
+        });
 
     if (response.status !== 200)
         return;
@@ -44,7 +51,7 @@ async function ServerConsoleRead() {
         return;
 
     content_buff += text;
-    
+
     if (content_on)
         content.textContent += text;
 }

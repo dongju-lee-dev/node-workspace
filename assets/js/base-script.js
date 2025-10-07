@@ -10,8 +10,8 @@ customElements.define('work-space', Workspace);
 let dataBase = new Map();
 
 document.addEventListener('DOMContentLoaded', async () => {
-    let nodeResponse = fetch('/packages/node?command=list');
-    let toolResponse = fetch('/packages/tool?command=list');
+    let nodeResponse = fetch('/packages/node?group=_all_key&name=', { method: "GET" }).then(response => response.json());
+    let toolResponse = fetch('/packages/tool?key=_all_key', { method: "GET" }).then(response => response.json());
 
     const layout = {
         "leftTop": document.querySelector('#top-bar-left-point'),
@@ -42,55 +42,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     dataBase.set('CreatePackageShadowDOM', CreatePackageShadowDOM);
     dataBase.set('SetSidePanelEvent', SetSidePanelEvent);
 
-    let nodeKeyBuff = (await (await nodeResponse).text()).split('#');
-    let nodeKey = {};
+    let nodeKey = await nodeResponse;
     let nodeValue = {};
 
-    if (nodeKeyBuff[0] !== '') {
-        for (let i = 0; i < nodeKeyBuff.length; ++i) {
-            if (nodeKeyBuff[i] === '0') continue;
+    await Promise.all(Object.entries(nodeKey).map(async ([group, names]) => {
+        const nodeGroup = {}
 
-            let buff = nodeKeyBuff[i].split('.');
+        await Promise.all(names.map(async name => {
+            const response = await fetch(`/packages/node?group=${group}&name=${name}`, { method: "GET" });
+            const json = await response.json();
 
-            nodeKey[buff[0]] = buff[1].split(',');
-        }
-
-        await Promise.all(Object.entries(nodeKey).map(async ([node_group, node_names]) => {
-            const nodeGroup = {}
-
-            await Promise.all(node_names.map(async name => {
-                const response = await fetch(`/packages/node?command=get&node_group=${node_group}&node_name=${name}`);
-                const json = await response.json();
-
-                nodeGroup[name] = json;
-            }));
-
-            nodeValue[node_group] = nodeGroup;
+            nodeGroup[name] = json;
         }));
-    }
+
+        nodeValue[group] = nodeGroup;
+    }));
 
     dataBase.set('nodeKey', nodeKey);
     dataBase.set('nodeValue', nodeValue);
 
-    let tool = (await (await toolResponse).text()).split(',');
+    let tool = await toolResponse;
     let toolLoadEnd = [];
 
-    if (tool[0] !== '') {
-        dataBase.set('toolLoadEnd', toolLoadEnd);
+    dataBase.set('toolLoadEnd', toolLoadEnd);
 
-        await Promise.all(tool.map(async key => {
-            const response = await fetch(`/packages/tool?command=load&name=${key}`);
-            const text = await response.text();
+    await Promise.all(tool.map(async key => {
+        const text = await fetch(`/packages/tool`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    command: 'load',
+                    key: key
+                })
+            })
+            .then(response => response.text());
 
-            await new AsyncFunction('dataBase', text)(dataBase);
-        }));
+        await new AsyncFunction('dataBase', text)(dataBase);
+    }));
 
-        await Promise.all(toolLoadEnd.map(func => {
-            func();
-        }));
+    await Promise.all(toolLoadEnd.map(func => {
+        func();
+    }));
 
-        dataBase.delete('toolLoadEnd');
-    }
+    dataBase.delete('toolLoadEnd');
 
     dataBase.set('tool', tool);
 
@@ -100,7 +94,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 window.addEventListener('beforeunload', (e) => {
     dataBase.get('tool').forEach(key => {
-        fetch(`/packages/tool?command=unload&name=${key}`);
+        fetch(`/packages/tool`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    command: 'unload',
+                    key: key
+                })
+            }
+        );
     });
 });
 

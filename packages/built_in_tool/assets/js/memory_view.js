@@ -30,7 +30,15 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_memory_view', 'Memory Vie
     });
 
 async function ServerMemoryRead() {
-    const response = await fetch('/packages/tool?command=work&name=built_in_tool_memory_view');
+    const response = await fetch('/packages/tool',
+        {
+            method: "POST",
+            body: JSON.stringify({
+                command: 'work',
+                key: 'built_in_tool_memory_view',
+            })
+        }
+    );
     if (response.status !== 200) return;
 
     const json = await response.json();

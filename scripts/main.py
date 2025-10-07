@@ -9,14 +9,7 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# scripts
-# venv 에서 uv로 변경
-# setup.py를 통해서 기본 python package 설치
-
-# scripts
-# packages 통신 관련 리팩토링 (REST API, JSON)
-
-# built_in_tool_package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가, 패키지에 로컬 폴더를 집어 넣는 기능 추가
+# built_in_tool_package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가
 
 # scripts
 # workspace 통신 관련 리팩토링 (REST API, JSON)

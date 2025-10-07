@@ -65,60 +65,32 @@ def init():
                             tool[meta["tool_name"]] = member(meta)
 
     return [
-        web.get("/packages", package_handle),
-        web.get("/packages/node", node_handle),
-        web.get("/packages/tool", tool_handle),
+        web.get("/packages", package_get_handle),
+        web.post("/packages", package_post_handle),
+        web.delete("/packages", package_delete_handle),
+        web.get("/packages/node", node_get_handle),
+        web.get("/packages/tool", tool_get_handle),
+        web.post("/packages/tool", tool_post_handle),
         web.get("/packages/assets/{tail:.*}", asset_handle),
     ]
 
 
-def package_handle(request: web.Request):
-    """
-    package manipulation
-
-    Adding packages is done via git clone and is only available for public use.
-    """
-
-    command = request.query.get("command")
-    result = ""
-
-    if command == "list":
-        result = package_list()
-    elif command == "add":
-        result = package_add(request.query.get("url"))
-    elif command == "remove":
-        result = package_remove(request.query.get("name"))
-    else:
-        result = f"error : {command} is not a valid command."
-
-    return web.Response(text=result)
+async def package_get_handle(request: web.Request):
+    return web.json_response(file.list_directory(PACKAGE_PATH))
 
 
-def package_list():
-    list = file.list_directory(PACKAGE_PATH)
-    list_len = len(list)
-    text = ""
-
-    for name in list:
-        list_len -= 1
-        if list_len != 0:
-            text += f"{name},"
-        else:
-            text += f"{name}"
-
-    return text
-
-
-def package_add(url: str):
+async def package_post_handle(request: web.Request):
     path = f"{PACKAGE_PATH}/__temp__"
 
-    if file.existe_directory(path):
-        file.delete_directory(path)
-
     try:
+        data = await request.json()
+
+        if file.existe_directory(path):
+            file.delete_directory(path)
+
         file.create_directory(path)
 
-        git.Repo.clone_from(url, file.get_absolute_path(path))
+        git.Repo.clone_from(data["url"], file.get_absolute_path(path))
 
         config = toml.loads(file.read_file(f"{path}/config.toml"))
 
@@ -132,68 +104,45 @@ def package_add(url: str):
                 )
 
         file.rename_directory(path, f"{PACKAGE_PATH}/{config['name']}")
-        file.delete_directory(path)
 
-        return "reset"
+        return web.Response(status=200)
 
     except Exception as e:
-        return str(e)
+        return web.Response(status=400, text=str(e))
 
 
-def package_remove(name: str):
-    file.delete_directory(f"{PACKAGE_PATH}/{name}")
+async def package_delete_handle(request: web.Request):
+    try:
+        name = request.query.get("name")
 
-    return "reset"
+        file.delete_directory(f"{PACKAGE_PATH}/{name}")
 
+        return web.Response(status=200)
 
-def node_handle(request: web.Request):
-    """
-    all_node_key has the format node_group:node_name,node_name/...
-    node_code returns the code of the node.
-    node_code returns the desgin of the node.
-    """
-
-    command = request.query.get("command")
-    result = ""
-
-    if command == "list":
-        result = node_list()
-    elif command == "get":
-        result = node_get(
-            request.query.get("node_group"), request.query.get("node_name")
-        )
-    else:
-        result = f"error : {command} is not a valid command."
-
-    return web.Response(text=result)
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
 
 
-def node_list():
+async def node_get_handle(request: web.Request):
     global node
 
-    text = ""
-    n_g_number = len(node)
+    try:
+        group = request.query.get("group")
+        name = request.query.get("name")
 
-    for key in node:
-        text += f"{key}."
-        n_l_number = len(node[key])
+        if group == "_all_key":
+            buff = {}
 
-        for key_key in node[key]:
-            n_l_number -= 1
-            if n_l_number != 0:
-                text += f"{key_key},"
-            else:
-                text += f"{key_key}"
+            for k in node.keys():
+                buff[k] = list(node[k].keys())
 
-        n_g_number -= 1
-        if n_g_number != 0:
-            text += "#"
+            return web.json_response(buff)
 
-    return text
+        else:
+            return web.json_response(get_node(group, name).meta)
 
-
-def node_get(node_group: str, node_name: str):
-    return json.dumps(get_node(node_group, node_name).meta)
+    except Exception as e:
+        return web.Response(status=200, text=str(e))
 
 
 def get_node(node_group: str, node_name: str):
@@ -208,44 +157,42 @@ def get_node(node_group: str, node_name: str):
     return None
 
 
-async def tool_handle(request: web.Request):
-    """
-    list returns the names of all tools you currently have. use command=list
-    When loading tools from the web, use command=load. use name=(tool name).
-    When unloading tools from the web, use command=unload. use name=(tool name).
-    """
-
-    command = request.query.get("command")
-    result = ""
-
-    if command == "list":
-        result = tool_list()
-    elif command == "load":
-        return tool[request.query.get("name")].load(request)
-    elif command == "unload":
-        return tool[request.query.get("name")].unload(request)
-    elif command == "work":
-        return tool[request.query.get("name")].work(request)
-    else:
-        result = f"error : {command} is not a valid command."
-
-    return web.Response(text=result)
-
-
-def tool_list():
+async def tool_get_handle(request: web.Request):
     global tool
 
-    text = ""
-    number = len(tool)
+    try:
+        key = request.query.get("key")
 
-    for name in tool:
-        number -= 1
-        if number != 0:
-            text += f"{name},"
+        if key == "_all_key":
+            return web.json_response(list(tool.keys()))
+
         else:
-            text += f"{name}"
+            return web.Response(status=200, text="???")
 
-    return text
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def tool_post_handle(request: web.Request):
+    global tool
+
+    try:
+        data = await request.json()
+
+        command = data["command"]
+        key = data["key"]
+
+        if command == "load":
+            return tool[key].load(request)
+        elif command == "unload":
+            return tool[key].unload(request)
+        elif command == "work":
+            return tool[key].work(request)
+        else:
+            return web.Response(status=400, text="The work value is incorrect.")
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
 
 
 def get_tool(tool_name: str):

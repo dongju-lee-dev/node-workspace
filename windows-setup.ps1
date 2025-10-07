@@ -1,4 +1,4 @@
-clear
+Clear-Host
 
 MKDIR "save"
 MKDIR "save/workspace"
