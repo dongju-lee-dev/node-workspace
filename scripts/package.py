@@ -76,10 +76,18 @@ def init():
 
 
 async def package_get_handle(request: web.Request):
+    """
+    Returns all dictionaries in PACKAGE_PATH.
+    """
+    
     return web.json_response(file.list_directory(PACKAGE_PATH))
 
 
 async def package_post_handle(request: web.Request):
+    """
+    Clone the GitHub repository and add it to PACKAGE_PATH. The URL is required.
+    """
+    
     path = f"{PACKAGE_PATH}/__temp__"
 
     try:
@@ -148,6 +156,10 @@ async def package_post_handle(request: web.Request):
 
 
 async def package_delete_handle(request: web.Request):
+    """
+    Receives the name of the package to be deleted and deletes the folder in PACKAGE_PATH.
+    """
+
     try:
         name = request.query.get("name")
 
@@ -160,6 +172,10 @@ async def package_delete_handle(request: web.Request):
 
 
 async def node_get_handle(request: web.Request):
+    """
+    The query statement takes group and name arguments. If the group value is _all_key, the node's key information is returned, and the name value is not required.
+    """
+
     global node
 
     try:
@@ -194,6 +210,10 @@ def get_node(node_group: str, node_name: str):
 
 
 async def tool_get_handle(request: web.Request):
+    """
+    It receives a key argument as a query statement. If the key value is _all_key, it returns the key information of the node.
+    """
+
     global tool
 
     try:
@@ -210,6 +230,10 @@ async def tool_get_handle(request: web.Request):
 
 
 async def tool_post_handle(request: web.Request):
+    """
+    It receives a command and key as arguments. The arguments are received as JSON and the task corresponding to the command is executed.
+    """
+
     global tool
 
     try:
@@ -240,4 +264,6 @@ def get_tool(tool_name: str):
 
 
 def asset_handle(request: web.Request):
+    """You can access the file structure in the packages folder."""
+
     return web.FileResponse(f"packages/{request.path[16:]}")

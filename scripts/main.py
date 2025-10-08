@@ -9,11 +9,6 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# 문서 : package, node, tool, workspace, webUI 작성
-# 라이선스 : MIT 라이선스에서 Apache 2.0 라이선스로 변경
-
-# 출시 1.0
-
 # === v1.0 ===
 
 # 패키지 개발

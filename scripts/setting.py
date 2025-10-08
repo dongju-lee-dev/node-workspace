@@ -1,10 +1,3 @@
-"""
-Provides a settings function
-
-If you add settings to a package and then delete the package and reinstall the package,
-the settings will remain unless you directly delete the settings information.
-"""
-
 import file
 import toml
 from aiohttp import web
@@ -25,18 +18,29 @@ def init():
 
 
 def read():
+    """read setting file"""
+
     global setting
 
     setting = toml.loads(file.read_file(SETTING_FILE_PATH))
 
 
 def write():
+    """write setting file"""
+
     global setting
 
     file.write_file(SETTING_FILE_PATH, toml.dumps(setting))
 
 
 async def get_handle(request: web.Request):
+    """
+    Returns the setting value that is the value of key.
+    If the key value is _all, all configuration data is returned.
+    If the key value is _all_key, the key value of all settings are returned.
+    If the key value is _all_value, the values of all settings are returned.
+    """
+
     global setting
 
     key = request.query.get("key")
@@ -52,6 +56,10 @@ async def get_handle(request: web.Request):
 
 
 async def post_handle(request: web.Request):
+    """
+    It takes a key argument and creates a configuration space corresponding to the key value. You can initialize the space by adding a value.
+    """
+
     global setting
 
     try:
@@ -72,6 +80,10 @@ async def post_handle(request: web.Request):
 
 
 async def put_handle(request: web.Request):
+    """
+    Receive key and value values and modify the settings.
+    """
+
     global setting
 
     try:
@@ -92,6 +104,10 @@ async def put_handle(request: web.Request):
 
 
 async def patch_handle(request: web.Request):
+    """
+    Receive key and value values and modify the settings.
+    """
+
     global setting
 
     try:
@@ -112,6 +128,10 @@ async def patch_handle(request: web.Request):
 
 
 async def delete_handle(request: web.Request):
+    """
+    Delete the key value setting.
+    """
+
     global setting
 
     key = request.query.get("key")

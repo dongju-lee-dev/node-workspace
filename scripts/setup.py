@@ -1,3 +1,9 @@
+"""
+It was created to run in setup and install the pip package of the package.
+
+When you use it when you move a package locally to PACKAGE_PATH, it automatically installs the package's pip package.
+"""
+
 import os
 import subprocess
 import sys

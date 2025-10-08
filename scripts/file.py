@@ -73,6 +73,8 @@ def rename_directory(old_path: str, new_path: str):
 
 
 def delete_all_directory(path: str):
+    """Returns the names of all files and folders in a directory."""
+
     abs_path = g_path + path
     if os.path.exists(abs_path):
         shutil.rmtree(abs_path)

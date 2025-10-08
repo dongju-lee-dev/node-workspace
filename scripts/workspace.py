@@ -9,6 +9,8 @@ WORKSPACE_PATH = "save/workspace"
 
 
 class WorkSpaceSys:
+    """Special variables when executing a function"""
+
     memory: dict[int, any]
     content: str
 
@@ -18,6 +20,8 @@ class WorkSpaceSys:
 
 
 class NodePortAddress:
+    """node port address"""
+    
     id: int
     port: int
 
@@ -32,6 +36,8 @@ class NodePortAddress:
 
 
 class NodeSave:
+    """Format for node storage"""
+
     group: str
     name: str
     input: list[NodePortAddress]
@@ -51,6 +57,8 @@ class NodeSave:
 
 
 class Node:
+    """Node runtime storage format"""
+    
     data: NodeData
     input: list[NodePortAddress]
     output: list[list[NodePortAddress]]
@@ -78,6 +86,8 @@ path: str = None
 
 
 def init():
+    """workspace init"""
+    
     if not file.existe_directory(WORKSPACE_PATH):
         file.create_directory(WORKSPACE_PATH)
 
@@ -142,6 +152,8 @@ def init():
 
 
 async def workspace_list_handle(request: web.Request):
+    """workspace list"""
+    
     try:
         return web.json_response(file.list_directory(WORKSPACE_PATH))
 
@@ -150,6 +162,8 @@ async def workspace_list_handle(request: web.Request):
 
 
 async def workspace_create_handle(request: web.Request):
+    """workspace create"""
+
     try:
         data = await request.json()
         path = f"{WORKSPACE_PATH}/{data["name"]}"
@@ -171,6 +185,8 @@ async def workspace_create_handle(request: web.Request):
 
 
 async def workspace_delete_handle(request: web.Request):
+    """workspace delete"""
+    
     try:
         file.delete_all_directory(f"{WORKSPACE_PATH}/{request.query.get("name")}")
 
@@ -181,6 +197,8 @@ async def workspace_delete_handle(request: web.Request):
 
 
 async def workspace_load_handle(request: web.Request):
+    """workspace load"""
+
     global meta
     global node
     global memory
@@ -216,6 +234,8 @@ async def workspace_load_handle(request: web.Request):
 
 
 async def workspace_unload_handle(request: web.Request):
+    """workspace unload"""
+    
     try:
         global meta
         global node
@@ -234,6 +254,8 @@ async def workspace_unload_handle(request: web.Request):
 
 
 async def workspace_save_handle(request: web.Request):
+    """workspace save"""
+
     try:
         global meta
         global node
@@ -272,6 +294,8 @@ async def workspace_save_handle(request: web.Request):
 
 
 async def workspace_rename_handle(request: web.Request):
+    """workspace rename"""
+
     try:
         data = await request.json()
 
@@ -287,6 +311,8 @@ async def workspace_rename_handle(request: web.Request):
 
 
 async def meta_get_handle(request: web.Request):
+    """meta data get"""
+
     global meta
 
     try:
@@ -307,6 +333,8 @@ async def meta_get_handle(request: web.Request):
 
 
 async def meta_create_handle(request: web.Request):
+    """meta data create"""
+
     global meta
 
     try:
@@ -324,6 +352,8 @@ async def meta_create_handle(request: web.Request):
 
 
 async def meta_update_handle(request: web.Request):
+    """meta data update"""
+
     global meta
 
     try:
@@ -338,6 +368,8 @@ async def meta_update_handle(request: web.Request):
 
 
 async def meta_delete_handle(request: web.Request):
+    """meta data delete"""
+
     global meta
 
     try:
@@ -348,6 +380,8 @@ async def meta_delete_handle(request: web.Request):
 
 
 async def node_get_handle(request: web.Request):
+    """node data get"""
+
     global node
 
     try:
@@ -388,6 +422,8 @@ async def node_get_handle(request: web.Request):
 
 
 async def node_create_handle(request: web.Request):
+    """node data create"""
+
     global node
 
     try:
@@ -421,6 +457,8 @@ async def node_create_handle(request: web.Request):
 
 
 async def node_movement_handle(request: web.Request):
+    """node movement"""
+
     global node
 
     try:
@@ -439,6 +477,8 @@ async def node_movement_handle(request: web.Request):
 
 
 async def node_content_handle(request: web.Request):
+    """node content"""
+
     global node
 
     try:
@@ -455,6 +495,8 @@ async def node_content_handle(request: web.Request):
 
 
 async def node_link_handle(request: web.Request):
+    """node link"""
+
     global node
 
     try:
@@ -476,6 +518,8 @@ async def node_link_handle(request: web.Request):
 
 
 async def node_unlink_handle(request: web.Request):
+    """node unlink"""
+
     global node
 
     try:
@@ -497,6 +541,8 @@ async def node_unlink_handle(request: web.Request):
 
 
 async def node_delete_handle(request: web.Request):
+    """node delete"""
+
     global node
 
     try:
@@ -525,6 +571,8 @@ async def node_delete_handle(request: web.Request):
 
 
 async def memory_get_handle(request: web.Request):
+    """memory data get"""
+
     global memory
 
     try:
@@ -539,6 +587,8 @@ async def memory_get_handle(request: web.Request):
 
 
 async def memory_create_handle(request: web.Request):
+    """create memory data"""
+
     try:
         data = await request.json()
         if "value" in data:
@@ -553,6 +603,8 @@ async def memory_create_handle(request: web.Request):
 
 
 async def memory_update_handle(request: web.Request):
+    """udpate memory data"""
+
     try:
         data = await request.json()
         memory[data["key"]] = data["value"]
@@ -564,6 +616,8 @@ async def memory_update_handle(request: web.Request):
 
 
 async def memory_delete_handle(request: web.Request):
+    """delete memory data"""
+
     try:
         del memory[request.query.get("key")]
 
@@ -574,6 +628,8 @@ async def memory_delete_handle(request: web.Request):
 
 
 async def path_get_handle(request: web.Request):
+    """get now path"""
+
     global path
 
     try:
@@ -584,6 +640,8 @@ async def path_get_handle(request: web.Request):
 
 
 async def runtime_handle(request: web.Request):
+    """Executes all nodes associated with the node with the sent node ID value."""
+
     ws = web.WebSocketResponse()
 
     try:
