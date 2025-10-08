@@ -37,8 +37,8 @@ export class Workspace extends HTMLElement {
 
         this.space.appendChild(this.nodePrefab.querySelector('style'));
 
-        const workSpacePath = await fetch('/workspace?command=path').then(response => response.text());
-        const workSpaceData = await fetch('/workspace/editor?command=get').then(response => response.json());
+        const workSpacePath = await fetch('/workspace/path', { method: "GET" }).then(response => response.text());
+        const workSpaceData = await fetch('/workspace/node', { method: "GET" }).then(response => response.json());
 
         this.unload();
         this.load(workSpacePath === "NULL" ? null : workSpacePath.split('/')[2], workSpaceData);
@@ -505,13 +505,20 @@ export class Workspace extends HTMLElement {
     }
 
     async createNode(group, name, positionX, positionY) {
-        const response = await fetch(`/workspace/editor?command=create&node_group=${group}&node_name=${name}&position_x=${positionX}&position_y=${positionY}`);
-        const param = new URLSearchParams(await response.text());
+        const response = await fetch(`/workspace/node`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    group: group,
+                    name: name,
+                    positionX: positionX,
+                    positionY: positionY,
+                })
+            });
 
-        if (param.get('status') !== "success") {
-            console.log(param.get("message"));
-
-            return;
+        if (response.status !== 200) {
+            console.log(await response.text())
+            return false;
         }
 
         const nodeData = this.dataBase.get('nodeValue')[group][name];
@@ -524,7 +531,7 @@ export class Workspace extends HTMLElement {
 
         element.addEventListener('mousedown', e => this.nodeHeader(element, e));
         element.style.transform = `translate(${positionX}px, ${positionY}px)`;
-        element.id = parseInt(param.get('id'), 10);
+        element.id = parseInt(await response.text(), 10);
         element.positionX = positionX;
         element.positionY = positionY;
 
@@ -568,6 +575,8 @@ export class Workspace extends HTMLElement {
 
         this.spaceNode.appendChild(element);
         this.node[element.id] = element;
+
+        return true;
     }
 
     async deleteNode(id) {
@@ -585,38 +594,68 @@ export class Workspace extends HTMLElement {
             }
         }
 
-        const response = await fetch(`/workspace/editor?command=delete&id=${id}`);
-        const param = new URLSearchParams(await response.text());
+        const response = await fetch(`/workspace/node?id=${id}`, { method: "DELETE" });
 
-        if (param.get("status") === "success")
-            n.remove();
-        else
-            console.log(param.get("message"));
+        if (response.status !== 200) {
+            console.log(await response.text());
+            return false;
+        }
+
+        n.remove();
+        return true;
     }
 
     async movementNode(id, positionX, positionY) {
-        const response = await fetch(`/workspace/editor?command=movement&id=${id}&position_x=${positionX}&position_y=${positionY}`);
-        const param = new URLSearchParams(await response.text());
+        const response = await fetch('/workspace/node/movement',
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    id: id,
+                    positionX: positionX,
+                    positionY, positionY,
+                })
+            });
 
-        if (param.get("status") !== "success")
-            console.log(param.get("message"));
+        if (response.status !== 200) {
+            console.log(await response.text());
+            return false;
+        }
+
+        return true;
     }
 
     async contentNode(id, content) {
-        const response = await fetch(`/workspace/editor?command=content&id=${id}&content=${content}`);
-        const param = new URLSearchParams(await response.text());
+        const response = await fetch('/workspace/node/content',
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    id: id,
+                    content, content,
+                }),
+            });
 
-        if (param.get("status") !== "success")
-            console.log(param.get("message"));
+        if (response.status !== 200) {
+            console.log(await response.text());
+            return false;
+        }
+
+        return true;
     }
 
     async linkNode(outputPortElement, outputId, outputPort, outputPositionX, outputPositionY, inputPortElement, inputId, inputPort, inputPositionX, inputPositionY, svg = null) {
-        const response = await fetch(`/workspace/editor?command=link&id_o=${outputId}&port_o=${outputPort}&id_i=${inputId}&port_i=${inputPort}`);
-        const param = new URLSearchParams(await response.text());
+        const response = await fetch('/workspace/node/link',
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    outputId: outputId,
+                    outputPort: outputPort,
+                    inputId: inputId,
+                    inputPort: inputPort,
+                })
+            });
 
-        if (param.get('status') !== "success") {
-            console.log(param.get("message"));
-
+        if (response.status !== 200) {
+            console.log(await response.text());
             return false;
         }
 
@@ -644,19 +683,28 @@ export class Workspace extends HTMLElement {
     }
 
     async unlinkNode(nodelink) {
-        const response = await fetch(`/workspace/editor?command=unlink&id_o=${nodelink.outputId}&port_o=${nodelink.outputPort}&id_i=${nodelink.inputId}&port_i=${nodelink.inputPort}`);
-        const param = new URLSearchParams(await response.text());
+        const response = await fetch('/workspace/node/unlink',
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    outputId: outputId,
+                    outputPort: outputPort,
+                    inputId: inputId,
+                    inputPort: inputPort,
+                })
+            });
 
-        if (param.get('status') !== "success") {
-            console.log(param.get("message"));
-
-            return;
+        if (response.status !== 200) {
+            console.log(await response.text());
+            return false;
         }
 
         this.node[nodelink.outputId].children[1].children[2].children[nodelink.outputPort].link = this.node[nodelink.outputId].children[1].children[2].children[nodelink.outputPort].link.filter(item => item !== nodelink);
         this.node[nodelink.inputId].children[1].children[0].children[nodelink.inputPort].link = null;
 
         nodelink.remove();
+
+        return true;
     }
 
     async runNode(selectNodeID, open = null, message = null, error = null, close = null) {

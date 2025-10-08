@@ -9,13 +9,6 @@ from scripts import package
 from scripts import setting
 from scripts import workspace
 
-# built_in_tool_package : package 삭제 UI 추가, github에서 다운로드 UI 추가, package 리스트 추가
-
-# scripts
-# workspace 통신 관련 리팩토링 (REST API, JSON)
-# workspace 메타 데이터 지원
-# workspace 외부 저장 작업 공간 주소 기능 추가
-
 # 문서 : package, node, tool, workspace, webUI 작성
 # 라이선스 : MIT 라이선스에서 Apache 2.0 라이선스로 변경
 
@@ -51,6 +44,12 @@ from scripts import workspace
 # === v2.0 ===
 
 setting.read()
+
+if not setting.existe("host"):
+    setting.set("host", "localhost")
+    
+if not setting.existe("port"):
+    setting.set("port", "8080")
 
 app = web.Application()
 

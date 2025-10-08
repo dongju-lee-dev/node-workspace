@@ -71,6 +71,7 @@ class Node:
         self.content = content
 
 
+meta: dict[str, any] = {}
 node: dict[int, Node] = {}
 memory: dict[str, any] = {}
 path: str = None
@@ -107,99 +108,98 @@ def init():
     )
 
     return [
-        web.get("/workspace", workspace_handle),
-        web.get("/workspace/editor", editor_handle),
+        # workspace
+        web.get("/workspace", workspace_list_handle),
+        web.post("/workspace", workspace_create_handle),
+        web.delete("/workspace", workspace_delete_handle),
+        web.get("/workspace/load", workspace_load_handle),
+        web.post("/workspace/unload", workspace_unload_handle),
+        web.post("/workspace/save", workspace_save_handle),
+        web.patch("/workspace/rename", workspace_rename_handle),
+        # meta
+        web.get("/workspace/meta", meta_get_handle),
+        web.post("/workspace/meta", meta_create_handle),
+        web.put("/workspace/meta", meta_update_handle),
+        web.delete("/workspace/meta", meta_delete_handle),
+        # node
+        web.get("/workspace/node", node_get_handle),
+        web.post("/workspace/node", node_create_handle),
+        web.patch("/workspace/node/movement", node_movement_handle),
+        web.patch("/workspace/node/content", node_content_handle),
+        web.patch("/workspace/node/link", node_link_handle),
+        web.patch("/workspace/node/unlink", node_unlink_handle),
+        web.delete("/workspace/node", node_delete_handle),
+        # memory
+        web.get("/workspace/memory", memory_get_handle),
+        web.post("/workspace/memory", memory_create_handle),
+        web.put("/workspace/memory", memory_update_handle),
+        web.delete("/workspace/memory", memory_delete_handle),
+        # path
+        web.get("/workspace/path", path_get_handle),
+        # runtime
         web.get("/workspace/runtime", runtime_handle),
     ]
 
 
-async def workspace_handle(request: web.Request):
-    """
-    A handle that manages storage.
-    Give a command with command.
-
-    The list command returns the names of all tasks in the workspace.
-    The new command creates a new workspace.
-    The delete command deletes a workspace.
-    The load command loads code and space files in the workspace.
-    The unload command discards data from code and space variables.
-    The save command saves code and spatial data.
-    The rename command changes the name of a workspace.
-    """
-
-    command = request.query.get("command")
-    result = ""
-
-    if command == "list":
-        result = workspace_list_to_str()
-    elif command == "new":
-        result = workspace_new(request.query.get("name"))
-    elif command == "delete":
-        result = workspace_delete(request.query.get("name"))
-    elif command == "rename":
-        result = workspace_rename(
-            request.query.get("old_name"), request.query.get("new_name")
-        )
-    elif command == "load":
-        result = workspace_load(request.query.get("name"))
-    elif command == "unload":
-        result = workspace_unload()
-    elif command == "save":
-        result = workspace_save(request.query.get("name"))
-    elif command == "path":
-        result = workspace_path()
-    else:
-        result = f"error : {command} is not a valid command."
-
-    return web.Response(text=result)
-
-
-def workspace_list_to_str():
-    return ",".join(file.list_directory(WORKSPACE_PATH))
-
-
-def workspace_new(name: str):
-    path = f"{WORKSPACE_PATH}/{name}"
-
-    if file.existe_directory(path):
-        path = None
-        return "error : There is already a workspace with the same name"
-
-    file.create_directory(path)
-    file.create_file(f"{path}/space.nww")
-    file.write_file(f"{path}/space.nww", yaml.dump({}, sort_keys=False))
-
-    return ""
-
-
-def workspace_delete(name: str):
-    path = f"{WORKSPACE_PATH}/{name}"
-
+async def workspace_list_handle(request: web.Request):
     try:
-        file.delete_all_directory(path)
-        return ""
+        return web.json_response(file.list_directory(WORKSPACE_PATH))
 
     except Exception as e:
-        return str(e)
+        return web.Response(status=400, text=str(e))
 
 
-def workspace_rename(old_name: str, new_name: str):
-    return file.rename_directory(
-        f"{WORKSPACE_PATH}/{old_name}", f"{WORKSPACE_PATH}/{new_name}"
-    )
-
-
-def workspace_load(name: str):
+async def workspace_create_handle(request: web.Request):
     try:
-        global node
-        global memory
-        global path
+        data = await request.json()
+        path = f"{WORKSPACE_PATH}/{data["name"]}"
 
+        if file.existe_directory(path):
+            raise RuntimeError("There is already a workspace with the same name")
+
+        file.create_directory(path)
+        file.create_file(f"{path}/space.nww")
+        file.create_file(f"{path}/space.nww")
+        file.write_file(
+            f"{path}/space.nww", yaml.dump({"meta": {}, "node": {}}, sort_keys=False)
+        )
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def workspace_delete_handle(request: web.Request):
+    try:
+        file.delete_all_directory(f"{WORKSPACE_PATH}/{request.query.get("name")}")
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def workspace_load_handle(request: web.Request):
+    global meta
+    global node
+    global memory
+    global path
+
+    try:
+        name = request.query.get("name")
         buff = yaml.safe_load(file.read_file(f"{WORKSPACE_PATH}/{name}/space.nww"))
-        node = {}
 
-        for key, value in buff.items():
-            n = Node(
+        meta = {}
+        node = {}
+        memory.clear()
+        path = f"{WORKSPACE_PATH}/{name}"
+
+        for key, value in buff["meta"].items():
+            meta[key] = value
+
+        for key, value in buff["node"].items():
+            node[key] = Node(
                 package.get_node(value.group, value.name),
                 value.input,
                 value.output,
@@ -208,41 +208,45 @@ def workspace_load(name: str):
                 value.position_y,
                 value.content,
             )
-            node[key] = n
 
-        memory.clear()
-        path = f"{WORKSPACE_PATH}/{name}"
-
-        return json.dumps(buff, default=lambda obj: obj.__dict__, indent=4)
+        return web.Response(status=200)
 
     except Exception as e:
-        return str(e)
+        return web.Response(status=400, text=str(e))
 
 
-def workspace_unload():
+async def workspace_unload_handle(request: web.Request):
     try:
+        global meta
         global node
         global memory
         global path
 
+        meta.clear()
         node.clear()
         memory.clear()
         path = None
 
-        return ""
+        return web.Response(status=200)
 
     except Exception as e:
-        return str(e)
+        return web.Response(status=400, text=str(e))
 
 
-def workspace_save(name: str):
+async def workspace_save_handle(request: web.Request):
     try:
+        global meta
         global node
 
-        buff: dict[int, NodeSave] = {}
+        data = await request.json()
+        meta_buff = {}
+        node_buff = {}
+
+        for key, value in meta.items():
+            meta_buff[key] = value
 
         for key, value in node.items():
-            ns = NodeSave(
+            node_buff[key] = NodeSave(
                 value.data.meta["node_group"],
                 value.data.meta["node_name"],
                 value.input,
@@ -251,113 +255,151 @@ def workspace_save(name: str):
                 value.position_y,
                 value.content,
             )
-            buff[key] = ns
+
+        buff = {}
+        buff["meta"] = meta_buff
+        buff["node"] = node_buff
 
         file.write_file(
-            f"{WORKSPACE_PATH}/{name}/space.nww", yaml.safe_dump(buff, sort_keys=False)
+            f"{WORKSPACE_PATH}/{data["name"]}/space.nww",
+            yaml.safe_dump(buff, sort_keys=False),
         )
 
-        return ""
+        return web.Response(status=200)
 
     except Exception as e:
-        return str(e)
+        return web.Response(status=400, text=str(e))
 
 
-def workspace_path():
-    global path
+async def workspace_rename_handle(request: web.Request):
+    try:
+        data = await request.json()
 
-    if None == path:
-        return "NULL"
-
-    return path
-
-
-async def editor_handle(request: web.Request):
-    command = request.query.get("command")
-    result = ""
-
-    if command == "get":
-        return editor_get()
-    elif command == "create":
-        result = editor_create(
-            request.query.get("node_group"),
-            request.query.get("node_name"),
-            request.query.get("position_x"),
-            request.query.get("position_y"),
-        )
-    elif command == "delete":
-        result = editor_delete(
-            request.query.get("id"),
-        )
-    elif command == "movement":
-        result = editor_movement(
-            request.query.get("id"),
-            request.query.get("position_x"),
-            request.query.get("position_y"),
-        )
-    elif command == "content":
-        result = editor_content(
-            request.query.get("id"),
-            request.query.get("content"),
-        )
-    elif command == "link":
-        result = editor_link(
-            request.query.get("id_o"),
-            request.query.get("port_o"),
-            request.query.get("id_i"),
-            request.query.get("port_i"),
-        )
-    elif command == "unlink":
-        result = editor_unlink(
-            request.query.get("id_o"),
-            request.query.get("port_o"),
-            request.query.get("id_i"),
-            request.query.get("port_i"),
-        )
-    else:
-        result = f"error : {command} is not a valid command."
-
-    return web.Response(text=result)
-
-
-def editor_get():
-    global node
-
-    buff = {}
-
-    for key, value in node.items():
-        buff[key] = NodeSave(
-            value.data.meta["node_group"],
-            value.data.meta["node_name"],
-            value.input,
-            value.output,
-            value.position_x,
-            value.position_y,
-            value.content,
+        file.rename_directory(
+            f"{WORKSPACE_PATH}/{data["old_name"]}",
+            f"{WORKSPACE_PATH}/{data["new_name"]}",
         )
 
-    return web.json_response(
-        buff,
-        dumps=lambda data: json.dumps(
-            data,
-            default=lambda obj: obj.__dict__,
-        ),
-    )
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
 
 
-def editor_create(node_group, node_name, position_x, position_y):
+async def meta_get_handle(request: web.Request):
+    global meta
+
+    try:
+        if "key" in request.query:
+            return web.json_response(
+                meta[request.query.get("key")],
+                dumps=lambda data: json.dumps(data, default=lambda obj: obj.__dict__),
+            )
+
+        else:
+            return web.json_response(
+                meta,
+                dumps=lambda data: json.dumps(data, default=lambda obj: obj.__dict__),
+            )
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def meta_create_handle(request: web.Request):
+    global meta
+
+    try:
+        data = await request.json()
+
+        if "value" in request.query:
+            meta[data["key"]] = data["value"]
+        else:
+            meta[data["key"]] = None
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def meta_update_handle(request: web.Request):
+    global meta
+
+    try:
+        data = await request.json()
+
+        meta[data["key"]] = data["value"]
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def meta_delete_handle(request: web.Request):
+    global meta
+
+    try:
+        del meta[request.query.get("key")]
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def node_get_handle(request: web.Request):
     global node
 
     try:
-        id = 0
+        buff = None
 
+        if "id" in request.query:
+            buff = node[int(request.query.get("id"))]
+            buff = NodeSave(
+                buff.data.meta["node_group"],
+                buff.data.meta["node_name"],
+                buff.input,
+                buff.output,
+                buff.position_x,
+                buff.position_y,
+                buff.content,
+            )
+
+        else:
+            buff = {}
+            for key, value in node.items():
+                buff[key] = NodeSave(
+                    value.data.meta["node_group"],
+                    value.data.meta["node_name"],
+                    value.input,
+                    value.output,
+                    value.position_x,
+                    value.position_y,
+                    value.content,
+                )
+
+        return web.json_response(
+            buff,
+            dumps=lambda data: json.dumps(data, default=lambda obj: obj.__dict__),
+        )
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def node_create_handle(request: web.Request):
+    global node
+
+    try:
+        data = await request.json()
+
+        id = 0
         for i in node.keys():
             if id != i:
                 break
-
             id += 1
 
-        n_b = package.get_node(node_group, node_name)
+        n_b = package.get_node(data["group"], data["name"])
         i_b = [NodePortAddress(None, None) for _ in range(len(n_b.meta["input"]))]
         o_b = [[] for _ in range(len(n_b.meta["output"]))]
         o_b_b = [None for _ in range(len(n_b.meta["output"]))]
@@ -367,106 +409,178 @@ def editor_create(node_group, node_name, position_x, position_y):
             i_b,
             o_b,
             o_b_b,
-            float(position_x),
-            float(position_y),
+            float(data["positionX"]),
+            float(data["positionY"]),
             "",
         )
 
-        return f"status=success&id={id}"
+        return web.Response(status=200, text=str(id))
 
     except Exception as e:
-        return f"status=error&message={str(e)}"
+        return web.Response(status=400, text=str(e))
 
 
-def editor_delete(id):
-    global node
-
-    id = int(id)
-
-    for ipa in node[id].input:
-        if ipa.id == None:
-            break
-
-        for opa in node[ipa.id].output[ipa.port]:
-            if opa.id == ipa.id:
-                node[ipa.id].output[ipa.port].remove(opa)
-                break
-
-    for opal in node[id].output:
-        for opa in opal:
-            node[opa.id].input[opa.port].id = None
-            node[opa.id].input[opa.port].port = None
-
-    del node[id]
-
-    return "status=success"
-
-
-def editor_movement(id, position_x, position_y):
-    try:
-        id = int(id)
-
-        node[id].position_x = float(position_x)
-        node[id].position_y = float(position_y)
-
-        return "status=success"
-
-    except Exception as e:
-        return f"status=error&message={str(e)}"
-
-
-def editor_content(id, content):
+async def node_movement_handle(request: web.Request):
     global node
 
     try:
-        id = int(id)
+        data = await request.json()
+        id = int(data["id"])
+        position_x = float(data["positionX"])
+        position_y = float(data["positionY"])
+
+        node[id].position_x = position_x
+        node[id].position_y = position_y
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def node_content_handle(request: web.Request):
+    global node
+
+    try:
+        data = await request.json()
+        id = int(data["id"])
+        content = data["content"]
 
         node[id].content = content
 
-        return "status=success"
+        return web.Response(status=200)
 
     except Exception as e:
-        return f"status=error&message={str(e)}"
+        return web.Response(status=400, text=str(e))
 
 
-def editor_link(id_o, port_o, id_i, port_i):
+async def node_link_handle(request: web.Request):
     global node
 
     try:
-        id_o = int(id_o)
-        port_o = int(port_o)
-        id_i = int(id_i)
-        port_i = int(port_i)
+        data = await request.json()
+        o_i = int(data["outputId"])
+        o_p = int(data["outputPort"])
+        i_i = int(data["inputId"])
+        i_p = int(data["inputPort"])
 
-        node[id_o].output[port_o].append(NodePortAddress(id_i, port_i))
+        node[o_i].output[o_p].append(NodePortAddress(i_i, i_p))
 
-        node[id_i].input[port_i].id = id_o
-        node[id_i].input[port_i].port = port_o
+        node[i_i].input[i_p].id = o_i
+        node[i_i].input[i_p].port = o_p
 
-        return "status=success"
+        return web.Response(status=200)
 
     except Exception as e:
-        return f"status=error&message={str(e)}"
+        return web.Response(status=400, text=str(e))
 
 
-def editor_unlink(id_o, port_o, id_i, port_i):
+async def node_unlink_handle(request: web.Request):
     global node
 
     try:
-        id_o = int(id_o)
-        port_o = int(port_o)
-        id_i = int(id_i)
-        port_i = int(port_i)
+        data = await request.json()
+        o_i = int(data["outputId"])
+        o_p = int(data["outputPort"])
+        i_i = int(data["inputId"])
+        i_p = int(data["inputPort"])
 
-        node[id_o].output[port_o].remove(NodePortAddress(id_i, port_i))
+        node[o_i].output[o_p].remove(NodePortAddress(i_i, i_p))
 
-        node[id_i].input[port_i].id = None
-        node[id_i].input[port_i].port = None
+        node[i_i].input[i_p].id = None
+        node[i_i].input[i_p].port = None
 
-        return "status=success"
+        return web.Response(status=200)
 
     except Exception as e:
-        return f"status=error&message={str(e)}"
+        return web.Response(status=400, text=str(e))
+
+
+async def node_delete_handle(request: web.Request):
+    global node
+
+    try:
+        id = int(request.query.get("id"))
+
+        for ipa in node[id].input:
+            if ipa.id == None:
+                break
+
+            for opa in node[ipa.id].output[ipa.port]:
+                if opa.id == ipa.id:
+                    node[ipa.id].output[ipa.port].remove(opa)
+                    break
+
+        for opal in node[id].output:
+            for opa in opal:
+                node[opa.id].input[opa.port].id = None
+                node[opa.id].input[opa.port].port = None
+
+        del node[id]
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def memory_get_handle(request: web.Request):
+    global memory
+
+    try:
+        if "key" in request.query:
+            return web.json_response(memory[request.query.get("key")])
+
+        else:
+            return web.json_response(memory)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def memory_create_handle(request: web.Request):
+    try:
+        data = await request.json()
+        if "value" in data:
+            memory[data["key"]] = data["value"]
+        else:
+            memory[data["key"]] = None
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def memory_update_handle(request: web.Request):
+    try:
+        data = await request.json()
+        memory[data["key"]] = data["value"]
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def memory_delete_handle(request: web.Request):
+    try:
+        del memory[request.query.get("key")]
+
+        return web.Response(status=200)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
+
+
+async def path_get_handle(request: web.Request):
+    global path
+
+    try:
+        return web.Response(status=200, text=path)
+
+    except Exception as e:
+        return web.Response(status=400, text=str(e))
 
 
 async def runtime_handle(request: web.Request):

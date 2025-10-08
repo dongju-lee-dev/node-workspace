@@ -46,22 +46,32 @@ save.addEventListener('click', async e => {
 
         if (workSpace.name === null) return;
 
-        const response = await fetch(`/workspace?command=new&name=${workSpace.name}`);
-        const text = await response.text();
+        const response = await fetch(`/workspace`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    name: workSpace.name,
+                })
+            });
 
-        if (text !== '') {
-            alert(`save error: ${text}`);
+        if (response.status !== 200) {
+            alert(`save error: ${await response.text()}`);
             return;
         }
     }
 
-    const response = await fetch(`/workspace?command=save&name=${workSpace.name}`);
-    const text = await response.text();
+    const response = await fetch(`/workspace/save`,
+        {
+            method: "POST",
+            body: JSON.stringify({
+                name: workSpace.name,
+            })
+        });
 
-    if (text === '')
+    if (response.status === 200)
         alert('save success');
     else
-        alert(`save error: ${text}`);
+        alert(`save error: ${await response.text()}`);
 });
 
 shadowDOM_tbl.appendChild(save);
@@ -71,29 +81,41 @@ shadowDOM_tbl.appendChild(save);
 const response_wc = await fetch('/packages/assets/built_in_tool/assets/html/workspace-content.html');
 const html_wc = await response_wc.text();
 
-dataBase.get('SetSidePanelEvent')(saveFolder, 'built_in_tool_workspace', 'Workspace', html_wc, 400, 800, (doc) => {
-    fetch('/workspace?command=list')
-        .then(response => response.text())
-        .then(data => {
-            const list = doc.querySelector('#workspace-list')
-            const button = doc.querySelector('#workspace-add-btn');
+dataBase.get('SetSidePanelEvent')(saveFolder, 'built_in_tool_workspace', 'Workspace', html_wc, 400, 800, async doc => {
+    const response = await fetch('/workspace')
 
-            button.addEventListener('click', () => {
-                const name = `${Math.random() * 10000000000000000}`;
+    if (response.status !== 200) {
+        console.log(await response.text());
+        return;
+    }
 
-                fetch(`/workspace?command=new&name=${name}`);
+    const list = doc.querySelector('#workspace-list')
+    const button = doc.querySelector('#workspace-add-btn');
 
-                list.appendChild(createItem(name));
-                list.appendChild(button);
+    button.addEventListener('click', async e => {
+        const name = `${Math.random() * 100000000000000000}`;
+
+        const response = await fetch(`/workspace`,
+            {
+                method: "POST",
+                body: JSON.stringify({
+                    name: name,
+                })
             });
 
-            if (data === '') return;
+        if (response.status !== 200) {
+            console.log(await response.text());
+            return;
+        }
 
-            data.split(',').forEach(name => {
-                list.appendChild(createItem(name));
-                list.appendChild(button);
-            });
-        });
+        list.appendChild(createItem(name));
+        list.appendChild(button);
+    });
+
+    for (const name of await response.json()) {
+        list.appendChild(createItem(name));
+        list.appendChild(button);
+    }
 }, null);
 
 let currentInput = null;
@@ -123,11 +145,22 @@ function createItem(name) {
 
         text.textContent = name;
 
-        const response = await fetch(`/workspace?command=load&name=${name}`);
-        const json = await response.json();
+        const response = await fetch(`/workspace/load?name=${name}`, { method: "GET" });
+
+        if (response.status !== 200) {
+            console.log(await response.text())
+            return;
+        }
+
+        const responseN = await fetch('/workspace/node', { method: "GET" });
+
+        if (responseN.status !== 200) {
+            console.log(await response.text())
+            return;
+        }
 
         workSpace.unload();
-        workSpace.load(name, json);
+        workSpace.load(name, await responseN.json());
 
     });
 
@@ -146,11 +179,23 @@ function createItem(name) {
         input.style.fontSize = 'inherit';
         input.style.width = '70%';
 
-        input.addEventListener('keydown', (e) => {
+        input.addEventListener('keydown', async e => {
             e.stopPropagation();
 
             if (e.key === 'Enter') {
-                fetch(`/workspace?command=rename&old_name=${nameNode.textContent}&new_name=${input.value}`);
+                const response = await fetch(`/workspace/rename`,
+                    {
+                        method: "PATCH",
+                        body: JSON.stringify({
+                            old_name: nameNode.textContent,
+                            new_name: input.value,
+                        })
+                    });
+
+                if (response.status !== 200) {
+                    console.log(await response.text())
+                    return;
+                }
 
                 name = input.value;
                 nameNode.textContent = input.value;
@@ -164,14 +209,19 @@ function createItem(name) {
         currentInput = input;
     });
 
-    img2.addEventListener('click', (e) => {
+    img2.addEventListener('click', async e => {
         if (e.button !== 0) return;
 
         e.preventDefault();
         e.stopPropagation();
 
         if (confirm(`'${nameNode.textContent}' Are you sure you want to delete the workspace?`)) {
-            fetch(`/workspace?command=delete&name=${nameNode.textContent}`);
+            const response = await fetch(`/workspace?name=${nameNode.textContent}`, { method: "DELETE" });
+
+            if (response.status !== 200) {
+                console.log(await response.text())
+                return;
+            }
 
             li.remove();
         }

@@ -136,6 +136,12 @@ def delete(key):
     del setting[key]
 
 
+def existe(key):
+    global setting
+
+    return key in setting
+
+
 def get(key):
     global setting
 
