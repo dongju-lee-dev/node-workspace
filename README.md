@@ -13,6 +13,8 @@ WINDOWS
 ```
 git clone https://github.com/darkprincess-dev/node-workspace-webui.git
 
+cd node-workspace-webui
+
 ./windows-setup.ps1
 ```
 
