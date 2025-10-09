@@ -1,6 +1,14 @@
 # PACKAGE DOCUMENT
 
-The package folder must contain a file called config.ini, which contains the package name and the installation names of any additional packages required by the package. (Installation is performed using pip.)
+How to create a package<br>
 
-Node files must be placed in the nodes folder.<br>
-The tool file must be placed in the tools folder.<br>
+A package must have a config.toml file.<br>
+The config.toml file must contain name and package.<br>
+name defines the package name.<br>
+packages specifies the names of the pip packages required by the package.<br>
+
+The nodes folder should only contain Python files.<br>
+Python files are automatically imported.<br>
+
+The tools folder should only contain Python files.<br>
+Python files are automatically imported.<br>
