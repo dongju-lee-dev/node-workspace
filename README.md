@@ -7,6 +7,8 @@ Please check the documents folder for more details.<br>
 
 ## Install
 
+need git, python v3.13
+
 WINDOWS
 ```
 git clone https://github.com/darkprincess-dev/node-workspace-webui.git
