@@ -18,6 +18,7 @@ unload is called when exiting a web page.<br>
 The work function is a function that requests work from the web.<br>
 
 When developing on the web, it is good to use a database.<br>
+The tool requires a JavaScript file to be sent first, and the database is provided as a variable during execution.<br>
 dataBase is a map variable.<br>
 
 It is recommended to add elements to the dataBase via CreatePackageShadowDOM.<br>
