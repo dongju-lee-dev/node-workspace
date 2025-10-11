@@ -39,6 +39,7 @@ export class Sidepanel extends HTMLElement {
         return ['point'];
     }
 
+    // initialization function
     async init() {
         if (Sidepanel.html instanceof Promise) return;
 
@@ -111,6 +112,7 @@ export class Sidepanel extends HTMLElement {
         }
     }
 
+    // Adding side panels
     Fold = (e) => {
         if (this.getAttribute('point') === 'left')
             this.style.transform = `translateX(-${this.style.getPropertyValue('--size')})`;
@@ -121,12 +123,14 @@ export class Sidepanel extends HTMLElement {
         this.SaveState();
     }
 
+    // Take out the side panel
     Unfold = (e) => {
         this.style.transform = `translateX(0px)`;
         this.unfold.style.display = 'none';
         this.SaveState();
     }
 
+    // Swap the contents of the left and right side panels
     Change = (e) => {
         let key = this.otherSidepanel.getToolKey();
         let name = this.otherSidepanel.getToolName();
@@ -146,6 +150,7 @@ export class Sidepanel extends HTMLElement {
             this.Exit(null);
     }
 
+    // Turn off the side panel
     Exit = (e) => {
         if (this.exit !== null) this.exit(this.content);
 
@@ -160,6 +165,7 @@ export class Sidepanel extends HTMLElement {
         this.SaveState();
     }
 
+    // Side panel size adjustment
     isResizable = false;
     ResizableMouseDown = (e) => {
         if (e.button != 0) return;
@@ -199,10 +205,12 @@ export class Sidepanel extends HTMLElement {
         this.SaveState();
     }
 
+    // Add to other side panel variables
     setOtherSidepanel(Sidepanel) {
         this.otherSidepanel = Sidepanel;
     }
 
+    // Activate side panel
     setTool(key, name, content, minWidth, maxWidth, start, exit) {
         if (this.otherSidepanel.getToolKey() !== key) {
             this.setToolContent(key, name, content, minWidth, maxWidth, exit);
@@ -212,6 +220,8 @@ export class Sidepanel extends HTMLElement {
         else
             this.Change(null);
     }
+
+    // Change side panel content
     setToolContent(key, name, content, minWidth, maxWidth, exit) {
         if (this.size < minWidth) this.size = minWidth;
         if (this.size > maxWidth) this.size = maxWidth;
@@ -229,6 +239,7 @@ export class Sidepanel extends HTMLElement {
         this.Unfold(null);
         this.SaveState();
     }
+    
     getToolKey() {
         return this.key;
     }
@@ -247,6 +258,8 @@ export class Sidepanel extends HTMLElement {
     getToolExit() {
         return this.exit;
     }
+
+    // Load side panel content
     reload(dataBase) {
         if (this.key === '') return;
 
@@ -281,6 +294,7 @@ export class Sidepanel extends HTMLElement {
         }
     }
 
+    // Save current side panel state data
     SaveState() {
         fetch('/setting', {
             method: 'PATCH',

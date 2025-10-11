@@ -12,7 +12,19 @@ Do not manipulate database variables arbitrarily.<br>
 - leftBottom: #bottom-bar-left-point<br>
 - rightBottom: #bottom-bar-right-point<br>
 
-"workSpace": A variable that contains the workspace element.<br>
+"workSpace": A variable that contains the workspace element. There are several additional events in the workspace.<br>
+- "unload": Called when all nodes are deleted
+- "load": Called when loading job data
+- "createNode": Called when a new node is created.
+- "deleteNode": Called when a node is deleted.
+- "movementNode": Called when the node's location information changes.
+- "contentNode": Called when a node's content information is changed.
+- "linkNode": Called when a node is connected.
+- "unlinkNode": Called when a node is disconnected.
+- "runOpen": Called when running a node.
+- "runMessage": Called when a message arrives while running a node.
+- "runError": Called when an error occurs while running a node.
+- "runClose": Called when node execution has ended.
 
 "workSpaceTop": Contains the element at the top center of the workspace.<br>
 
@@ -34,4 +46,6 @@ You can pass the name of the desired parent element as an argument, and optional
 - bottom-bar-left: layout.leftBottom
 - bottom-bar-right layout.rightBottom
 
-"SetSidePanelEvent": This is a function that is reserved for use in the side panel and can only be displayed in the side panel through this function.
+"SetSidePanelEvent": This is a function that is reserved for use in the side panel and can only be displayed in the side panel through this function.<br>
+
+"SetMessage": This is a function that displays a message at the bottom of the screen. In the text field, enter the content to be displayed, and in the textColor field, enter the CSS property value. It is optional.<br>

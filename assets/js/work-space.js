@@ -4,6 +4,7 @@ export class Workspace extends HTMLElement {
         this.attachShadow({ mode: 'open' });
     }
 
+    // initialization function
     async connectedCallback() {
         const workSpaceHTML = await fetch('/assets/html/work-space.html')
             .then(response => response.text());
@@ -41,9 +42,10 @@ export class Workspace extends HTMLElement {
         const workSpaceData = await fetch('/workspace/node', { method: "GET" }).then(response => response.json());
 
         this.unload();
-        this.load(workSpacePath === "NULL" ? null : workSpacePath.split('/')[2], workSpaceData);
+        this.load(workSpacePath === "" ? null : workSpacePath.split('/')[2], workSpaceData)
     }
 
+    // Move workspace
     spaceMovementHeader = e => {
         if (e.button != 1) return;
 
@@ -77,6 +79,7 @@ export class Workspace extends HTMLElement {
         document.addEventListener('mouseup', mouseup);
     }
 
+    // Zoom workspace
     spaceZoomHeader = (e => {
         let anim = null;
 
@@ -106,8 +109,10 @@ export class Workspace extends HTMLElement {
         }
     })()
 
+    // Workspace Transform Update
     stateUpdate = () => this.space.style.transform = `translate(${this.spacePositionX}px, ${this.spacePositionY}px) scale(${this.spaceScale})`;
 
+    // Activate command window
     commandHeader = e => {
         e.preventDefault();
         e.stopPropagation();
@@ -134,6 +139,7 @@ export class Workspace extends HTMLElement {
         document.addEventListener('click', click);
     }
 
+    // Add command
     setCommand(command, order) {
         if (this.command.children.length > 0) {
             const line = document.createElement('div');
@@ -170,6 +176,7 @@ export class Workspace extends HTMLElement {
         this.command.appendChild(group);
     }
 
+    // Move node location
     nodeHeader = (element, e) => {
         if (e.button != 0) return;
 
@@ -261,6 +268,7 @@ export class Workspace extends HTMLElement {
         document.addEventListener('mouseup', mouseup);
     }
 
+    // Node connection (by input)
     nodeInputHeader = (element, elementPort, elementColor, e) => {
         if (e.button != 0) return;
 
@@ -320,6 +328,7 @@ export class Workspace extends HTMLElement {
         document.addEventListener('mouseup', mouseup);
     }
 
+    // Node connection (by output)
     nodeOutputHeader = (element, elementPort, elementColor, e) => {
         if (e.button != 0) return;
 
@@ -379,6 +388,7 @@ export class Workspace extends HTMLElement {
         document.addEventListener('mouseup', mouseup);
     }
 
+    // Node connection line click handle
     nodeLinkHeader = (element, e) => {
         if (e.button !== 0) return;
 
@@ -390,6 +400,7 @@ export class Workspace extends HTMLElement {
         this.selectNodeOrNodeLink(element, () => element.style.filter = '');
     }
 
+    // Node, node link selection function
     selectNodeOrNodeLink(select, selectEnd) {
         if (this.nodeSelectEnd && this.nodeSelect)
             this.nodeSelectEnd();
@@ -398,12 +409,22 @@ export class Workspace extends HTMLElement {
         this.nodeSelect = select;
     }
 
+    // Unload workspace data
     unload() {
         this.spaceNodeLink.replaceChildren();
         this.spaceNode.replaceChildren();
         this.node = {}
+
+        this.dispatchEvent(
+            new CustomEvent('unload', {
+                detail: {},
+                bubbles: false,
+                cancelable: false
+            })
+        );
     }
 
+    // Load workspace data
     load(name, space) {
         this.name = name;
 
@@ -502,8 +523,20 @@ export class Workspace extends HTMLElement {
                 this.spaceNodeLink.appendChild(svg);
             }
         }
+
+        this.dispatchEvent(
+            new CustomEvent('load', {
+                detail: {
+                    name: name,
+                    space: space
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
     }
 
+    // Create Node
     async createNode(group, name, positionX, positionY) {
         const response = await fetch(`/workspace/node`,
             {
@@ -576,9 +609,23 @@ export class Workspace extends HTMLElement {
         this.spaceNode.appendChild(element);
         this.node[element.id] = element;
 
+        this.dispatchEvent(
+            new CustomEvent('createNode', {
+                detail: {
+                    group: group,
+                    name: name,
+                    positionX: positionX,
+                    positionY: positionY,
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
+
         return true;
     }
 
+    // delete node
     async deleteNode(id) {
         const n = this.node[id];
 
@@ -602,9 +649,21 @@ export class Workspace extends HTMLElement {
         }
 
         n.remove();
+
+        this.dispatchEvent(
+            new CustomEvent('deleteNode', {
+                detail: {
+                    id: id
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
+
         return true;
     }
 
+    // Node movement
     async movementNode(id, positionX, positionY) {
         const response = await fetch('/workspace/node/movement',
             {
@@ -621,9 +680,22 @@ export class Workspace extends HTMLElement {
             return false;
         }
 
+        this.dispatchEvent(
+            new CustomEvent('movementNode', {
+                detail: {
+                    id: id,
+                    positionX: positionX,
+                    positionY: positionY,
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
+
         return true;
     }
 
+    // node content
     async contentNode(id, content) {
         const response = await fetch('/workspace/node/content',
             {
@@ -639,9 +711,21 @@ export class Workspace extends HTMLElement {
             return false;
         }
 
+        this.dispatchEvent(
+            new CustomEvent('contentNode', {
+                detail: {
+                    id: id,
+                    content: content,
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
+
         return true;
     }
 
+    // node link
     async linkNode(outputPortElement, outputId, outputPort, outputPositionX, outputPositionY, inputPortElement, inputId, inputPort, inputPositionX, inputPositionY, svg = null) {
         const response = await fetch('/workspace/node/link',
             {
@@ -679,9 +763,30 @@ export class Workspace extends HTMLElement {
 
         this.spaceNodeLink.appendChild(svg);
 
+        this.dispatchEvent(
+            new CustomEvent('contentNode', {
+                detail: {
+                    outputId: outputId,
+                    outputPort: outputPort,
+                    outputPortElement: outputPortElement,
+                    outputPositionX: outputPositionX,
+                    outputPositionY: outputPositionY,
+                    inputId: inputId,
+                    inputPort: inputPort,
+                    inputPortElement: inputPortElement,
+                    inputPositionX: inputPositionX,
+                    inputPositionY: inputPositionY,
+                    svgElement: svg
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
+
         return true;
     }
 
+    // node unlink
     async unlinkNode(nodelink) {
         const response = await fetch('/workspace/node/unlink',
             {
@@ -704,15 +809,37 @@ export class Workspace extends HTMLElement {
 
         nodelink.remove();
 
+        this.dispatchEvent(
+            new CustomEvent('contentNode', {
+                detail: {
+                    nodelink: nodelink,
+                },
+                bubbles: false,
+                cancelable: false
+            })
+        );
+
         return true;
     }
 
+    // node run
     async runNode(selectNodeID, open = null, message = null, error = null, close = null) {
         const socket = new WebSocket(`/workspace/runtime`);
 
         socket.addEventListener('open', e => {
             if (typeof open !== 'function') {
                 socket.send(`${selectNodeID}`);
+
+                this.dispatchEvent(
+                    new CustomEvent('runOpen', {
+                        detail: {
+                            event: e,
+                            selectNodeID: selectNodeID,
+                        },
+                        bubbles: false,
+                        cancelable: false,
+                    })
+                );
             }
             else open(e);
         });
@@ -725,23 +852,53 @@ export class Workspace extends HTMLElement {
                     const node = this.node[parseInt(param.get('id'), 10)];
                     const content = param.get('content');
 
-                    node.classList.remove('node-error')
+                    node.classList.remove('node-error');
                     node.querySelector('#content').querySelectorAll('script').forEach(script => {
                         new Function('dataBase', 'node', 'content', script.textContent)(this.dataBase, node, content);
                     });
                 }
                 else
                     this.node[parseInt(param.get('id'), 10)].classList.add('node-error')
+
+                this.dispatchEvent(
+                    new CustomEvent('runMessage', {
+                        detail: {
+                            event: e
+                        },
+                        bubbles: false,
+                        cancelable: false,
+                    })
+                );
             }
             else message(e);
         });
 
         socket.addEventListener('error', e => {
-            if (typeof error !== 'function') { } else error(e);
+            if (typeof error !== 'function') {
+                this.dispatchEvent(
+                    new CustomEvent('runError', {
+                        detail: {
+                            event: e
+                        },
+                        bubbles: false,
+                        cancelable: false,
+                    })
+                );
+            } else error(e);
         });
 
         socket.addEventListener('close', e => {
-            if (typeof close !== 'function') { } else close(e);
+            if (typeof close !== 'function') {
+                this.dispatchEvent(
+                    new CustomEvent('runClose', {
+                        detail: {
+                            event: e
+                        },
+                        bubbles: false,
+                        cancelable: false,
+                    })
+                );
+            } else close(e);
         });
     }
 }

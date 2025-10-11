@@ -29,22 +29,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     sidePanel[0].setOtherSidepanel(sidePanel[1]);
     sidePanel[1].setOtherSidepanel(sidePanel[0]);
 
-    //변수
+    // variable
     dataBase.set('layout', layout);
     dataBase.set('workSpace', workSpace);
     dataBase.set('workSpaceTop', document.querySelector('#work-space-top'));
     dataBase.set('workSpaceBottom', document.querySelector('#work-space-bottom'));
-    dataBase.set('window-field', document.querySelector('#window-field'));
+    dataBase.set('windowField', document.querySelector('#window-field'));
     dataBase.set('leftSidePanel', sidePanel[0]);
     dataBase.set('rightSidePanel', sidePanel[1]);
+    dataBase.set('messageField', document.querySelector('#message-field'));
 
-    //함수
+    // function
     dataBase.set('CreatePackageShadowDOM', CreatePackageShadowDOM);
     dataBase.set('SetSidePanelEvent', SetSidePanelEvent);
+    dataBase.set('SetMessage', SetMessage);
 
+    // 노드 초기화
     let nodeKey = await nodeResponse;
     let nodeValue = {};
 
+    // Node initialization
     await Promise.all(Object.entries(nodeKey).map(async ([group, names]) => {
         const nodeGroup = {}
 
@@ -58,12 +62,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         nodeValue[group] = nodeGroup;
     }));
 
+    // Add node
     dataBase.set('nodeKey', nodeKey);
     dataBase.set('nodeValue', nodeValue);
 
+    // Tool initialization
     let tool = await toolResponse;
     let toolLoadEnd = [];
 
+    // Tool assignment
     dataBase.set('toolLoadEnd', toolLoadEnd);
 
     await Promise.all(tool.map(async key => {
@@ -86,8 +93,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     dataBase.delete('toolLoadEnd');
 
+    // Add tool
     dataBase.set('tool', tool);
 
+    // side panel rod
     sidePanel[0].reload(dataBase);
     sidePanel[1].reload(dataBase);
 });
@@ -106,13 +115,14 @@ window.addEventListener('beforeunload', (e) => {
     });
 });
 
+// Create and return ShadowDOM at the desired location
 function CreatePackageShadowDOM(target, html = null) {
     let div = document.createElement('div');
 
     div.attachShadow({ mode: 'open' });
 
     if (target === 'window-field')
-        dataBase.get('window-field').appendChild(div);
+        dataBase.get('windowField').appendChild(div);
     else if (target === 'work-space-top')
         dataBase.get('workSpaceTop').appendChild(div);
     else if (target === 'work-space-bottom')
@@ -131,6 +141,7 @@ function CreatePackageShadowDOM(target, html = null) {
     return div.shadowRoot;
 }
 
+// Functions registered in the side panel
 function SetSidePanelEvent(element, key, name, content, minWidth, maxWidth, start, exit) {
     if (!dataBase.has('sidePanel-setTool')) dataBase.set('sidePanel-setTool', new Map());
 
@@ -151,4 +162,27 @@ function SetSidePanelEvent(element, key, name, content, minWidth, maxWidth, star
 
         dataBase.get('rightSidePanel').setTool(key, name, content, minWidth, maxWidth, start, exit);
     });
+}
+
+// Message output function
+function SetMessage(message, color = null) {
+    const element = document.createElement('div');
+
+    element.classList.add('message');
+    element.textContent = message;
+
+    const elementExit = document.createElement('div');
+
+    elementExit.classList.add('message-exit');
+    elementExit.addEventListener('click', e => {
+        if (e.button !== 0) return;
+
+        element.remove();
+    });
+
+    element.appendChild(elementExit);
+
+    dataBase.get('messageField').appendChild(element);
+
+    if (color !== null) element.style.color = color;
 }

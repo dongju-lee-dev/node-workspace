@@ -129,6 +129,38 @@ li:hover {
     position: relative;
 }
 
+#message-field {
+    display: flex;
+    position: absolute;
+    bottom: 30px;
+    right: 5px;
+    width: 300px;
+    height: auto;
+    flex-direction: column;
+}
+
+.message {
+    position: relative;
+    box-sizing: border-box; 
+    width: 100%;
+    padding: 10px 24px 10px 10px;
+    margin-top: 5px;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.message-exit {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 24px;
+    height: 24px;
+    background-image: url('/assets/image/exit.png');
+    background-size: contain;
+}
+
 .icon {
     margin: 6px;
     height: 36px;
