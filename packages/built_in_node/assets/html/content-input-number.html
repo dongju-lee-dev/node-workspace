@@ -30,10 +30,14 @@
         input.value = content;
     }
 
-    input.addEventListener('change', e => {
-        workSpace.contentNode(node.id, input.value);
-    });
-    input.addEventListener('mousedown', e => {
-        if (e.button === 0) e.stopPropagation();
-    });
+    if ('run' in node) {
+        input.addEventListener('change', e => {
+            workSpace.contentNode(node.id, input.value);
+        });
+        input.addEventListener('mousedown', e => {
+            if (e.button === 0) e.stopPropagation();
+        });
+
+        node.run = false;
+    }
 </script>
