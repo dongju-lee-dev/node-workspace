@@ -30,7 +30,7 @@
         input.value = content;
     }
 
-    if ('run' in node) {
+    if (!('run' in node)) {
         input.addEventListener('change', e => {
             workSpace.contentNode(node.id, input.value);
         });

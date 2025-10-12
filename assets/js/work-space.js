@@ -206,11 +206,12 @@ export class Workspace extends HTMLElement {
 
                 for (let i = 0; i < inputLink.length; ++i) {
                     const ol = inputLink[i];
-                    const rect = ol.getBoundingClientRect();
-                    const posX = ((rect.left + rect.right) / 2 - this.spacePositionX) / this.spaceScale;
-                    const posY = ((rect.top + rect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
 
                     if (ol.link !== null) {
+                        const rect = ol.children[0].getBoundingClientRect();
+                        const posX = ((rect.left + rect.right) / 2 - this.spacePositionX) / this.spaceScale;
+                        const posY = ((rect.top + rect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
+
                         const d = ol.link.getAttribute('d');
                         const m = d.match(/M\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d*)/);
                         const c = d.match(/C\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d+)/);
@@ -221,12 +222,12 @@ export class Workspace extends HTMLElement {
 
                 for (let i = 0; i < outputLink.length; ++i) {
                     const ol = outputLink[i];
-                    const rect = ol.getBoundingClientRect();
-                    const posX = ((rect.left + rect.right) / 2 - this.spacePositionX) / this.spaceScale;
-                    const posY = ((rect.top + rect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
 
                     for (let j = 0; j < ol.link.length; ++j) {
                         if (ol.link[j] !== null) {
+                            const rect = ol.children[0].getBoundingClientRect();
+                            const posX = ((rect.left + rect.right) / 2 - this.spacePositionX) / this.spaceScale;
+                            const posY = ((rect.top + rect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
 
                             const d = ol.link[j].getAttribute('d');
                             const c = d.match(/C\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d+)\s*,\s*(-?\d+\.?\d*)\s+(-?\d+\.?\d+)/);
@@ -402,6 +403,8 @@ export class Workspace extends HTMLElement {
 
     // Node, node link selection function
     selectNodeOrNodeLink(select, selectEnd) {
+        if (this.nodeSelect === select) return;
+
         if (this.nodeSelectEnd && this.nodeSelect)
             this.nodeSelectEnd();
 
@@ -435,7 +438,6 @@ export class Workspace extends HTMLElement {
             const nameN = element.querySelector('#name');
             const input = element.querySelector('#input');
             const output = element.querySelector('#output');
-            const content = element.querySelector('#content');
 
             element.addEventListener('mousedown', e => this.nodeHeader(element, e));
             element.style.transform = `translate(${space[key].position_x}px, ${space[key].position_y}px)`;
@@ -476,11 +478,6 @@ export class Workspace extends HTMLElement {
                 output.appendChild(pe);
             }
 
-            content.innerHTML = nodeData.content;
-            content.querySelectorAll('script').forEach(script => {
-                new Function('dataBase', 'node', 'content', script.textContent)(this.dataBase, element, space[key].content);
-            });
-
             this.spaceNode.appendChild(element);
             this.node[element.id] = element;
         }
@@ -495,17 +492,9 @@ export class Workspace extends HTMLElement {
                 if (pa[i].id === null) continue;
 
                 const svg = document.createElementNS("http://www.w3.org/2000/svg", 'path');
-
                 const output = this.node[pa[i].id].querySelectorAll('.node-output')[pa[i].port];
-                const outputColorRect = output.children[0].getBoundingClientRect();
-                const outputColorPositionX = ((outputColorRect.left + outputColorRect.right) / 2 - this.spacePositionX) / this.spaceScale;
-                const outputColorPositionY = ((outputColorRect.top + outputColorRect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
 
-                const inputColorRect = p[i].children[0].getBoundingClientRect();
-                const inputColorPositionX = ((inputColorRect.left + inputColorRect.right) / 2 - this.spacePositionX) / this.spaceScale;
-                const inputColorPositionY = ((inputColorRect.top + inputColorRect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
-
-                output.link.push(svg)
+                output.link.push(svg);
                 p[i].link = svg;
 
                 svg.addEventListener('mousedown', e => this.nodeLinkHeader(svg, e));
@@ -513,14 +502,43 @@ export class Workspace extends HTMLElement {
                 svg.outputPort = pa[i].port;
                 svg.inputId = parseInt(nk, 10);
                 svg.inputPort = i;
-                svg.setAttribute('d', `
-                    M ${outputColorPositionX} ${outputColorPositionY}
-                    C ${outputColorPositionX + 200} ${outputColorPositionY},
-                    ${inputColorPositionX - 200} ${inputColorPositionY},
-                    ${inputColorPositionX} ${inputColorPositionY}
-                `);
 
                 this.spaceNodeLink.appendChild(svg);
+            }
+        }
+
+        for (const key in this.node) {
+            const nodeData = this.dataBase.get('nodeValue')[space[key].group][space[key].name];
+            const node = this.node[key];
+            const content = node.querySelector('#content');
+
+            content.innerHTML = nodeData.content;
+            content.querySelectorAll('script').forEach(script => {
+                new Function('dataBase', 'node', 'content', script.textContent)(this.dataBase, node, space[key].content);
+            });
+        }
+
+        for (const nk in this.node) {
+            if (!('input' in space[nk])) continue;
+
+            const pa = space[nk].input;
+            const p = this.node[nk].querySelectorAll('.node-input');
+
+            for (let i = 0; i < p.length; ++i) {
+                if (pa[i].id === null) continue;
+
+                const svg = p[i].link;
+
+                const output = this.node[pa[i].id].querySelectorAll('.node-output')[pa[i].port];
+                const outputColorRect = output.children[0].getBoundingClientRect();
+                const ocpX = ((outputColorRect.left + outputColorRect.right) / 2 - this.spacePositionX) / this.spaceScale;
+                const ocpY = ((outputColorRect.top + outputColorRect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
+
+                const inputColorRect = p[i].children[0].getBoundingClientRect();
+                const icpX = ((inputColorRect.left + inputColorRect.right) / 2 - this.spacePositionX) / this.spaceScale;
+                const icpY = ((inputColorRect.top + inputColorRect.bottom) / 2 - this.spacePositionY) / this.spaceScale;
+
+                svg.setAttribute('d', `M ${ocpX} ${ocpY} C ${ocpX + 200} ${ocpY}, ${icpX - 200} ${icpY}, ${icpX} ${icpY}`);
             }
         }
 
@@ -792,10 +810,10 @@ export class Workspace extends HTMLElement {
             {
                 method: "PATCH",
                 body: JSON.stringify({
-                    outputId: outputId,
-                    outputPort: outputPort,
-                    inputId: inputId,
-                    inputPort: inputPort,
+                    outputId: nodelink.outputId,
+                    outputPort: nodelink.outputPort,
+                    inputId: nodelink.inputId,
+                    inputPort: nodelink.inputPort,
                 })
             });
 
@@ -810,7 +828,7 @@ export class Workspace extends HTMLElement {
         nodelink.remove();
 
         this.dispatchEvent(
-            new CustomEvent('contentNode', {
+            new CustomEvent('unlinkNode', {
                 detail: {
                     nodelink: nodelink,
                 },

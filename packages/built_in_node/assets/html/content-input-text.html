@@ -30,7 +30,7 @@
         input.value = content;
     }
 
-    if ('run' in node) {
+    if (!('run' in node)) {
         node.run = false;
 
         input.addEventListener('change', e => {
