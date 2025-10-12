@@ -29,8 +29,8 @@ dataBase.get('SetSidePanelEvent')(icon, 'built_in_tool_memory_view', 'Memory Vie
     });
 
 async function ServerMemoryRead() {
-    if (parent !== null)
-        return
+    if (parent === null)
+        return;
 
     const response = await fetch('/packages/tool',
         {
@@ -41,6 +41,7 @@ async function ServerMemoryRead() {
             })
         }
     );
+
     if (response.status !== 200) return;
 
     const json = await response.json();

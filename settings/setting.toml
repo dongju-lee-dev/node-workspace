@@ -1,4 +1,4 @@
 host = "localhost"
 port = "8080"
 side-panel-state-left = "built_in_tool_workspace,400,on"
-side-panel-state-right = ",0,off"
+side-panel-state-right = "built_in_tool_memory_view,400,on"
